@@ -1,3 +1,4 @@
+# TODO: Keep minimal setup for now; extend when implementing routers
 from fastapi import FastAPI
 
 app = FastAPI()
