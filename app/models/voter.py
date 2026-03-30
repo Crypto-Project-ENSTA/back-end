@@ -8,3 +8,4 @@ class Voter(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, nullable=False, unique=True)
+    
