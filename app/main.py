@@ -10,3 +10,7 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+from app.init_db import init_db
+
+init_db()

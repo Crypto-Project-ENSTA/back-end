@@ -1,5 +1,12 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Enum
+import enum
 from app.database import Base
+
+
+class CountedVoteStatus(enum.Enum):
+    VALID = "valid"
+    INVALID_SIGNATURE = "invalid_signature"
+    INVALID_N2 = "invalid_n2"
 
 
 class CountedVote(Base):
@@ -11,4 +18,4 @@ class CountedVote(Base):
 
     vote = Column(String, nullable=False)
 
-    status = Column(String, nullable=False)
+    status = Column(Enum(CountedVoteStatus), nullable=False)
