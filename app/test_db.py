@@ -6,11 +6,7 @@ from app.models.votes import Vote
 db = SessionLocal()
 
 # create voter
-<<<<<<< HEAD
 new_voter = Voter(email="test3@test.com")
-=======
-new_voter = Voter(email="test@test.com")
->>>>>>> c1be64665d3bc2d0683ebb869238d656d33d50a4
 
 # create vote
 new_vote = Vote(
