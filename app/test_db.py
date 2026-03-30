@@ -6,7 +6,7 @@ from app.models.votes import Vote
 db = SessionLocal()
 
 # create voter
-new_voter = Voter(email="test@test.com")
+new_voter = Voter(email="test3@test.com")
 
 # create vote
 new_vote = Vote(

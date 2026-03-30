@@ -29,6 +29,6 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str
     DATABASE_URL: str
     
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env.local")
 
 settings=Settings()
