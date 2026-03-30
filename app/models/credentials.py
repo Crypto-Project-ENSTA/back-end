@@ -10,4 +10,4 @@ class Credential(Base):
     n1 = Column(String, nullable=False, unique=True)
     hash_n2 = Column(String, nullable=False, unique=True)
 
-    used = Column(Boolean, default=False)
+    used = Column(Boolean, default=False, nullable=False)

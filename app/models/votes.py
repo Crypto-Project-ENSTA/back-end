@@ -1,6 +1,13 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Enum
+import enum
 from datetime import datetime
 from app.database import Base
+
+
+class VoteStatus(enum.Enum):
+    PENDING = "pending"
+    VALID = "valid"
+    REJECTED = "rejected"
 
 
 class Vote(Base):
@@ -12,4 +19,4 @@ class Vote(Base):
 
     submitted_at = Column(DateTime, default=datetime.utcnow)
 
-    status = Column(String, default="pending")
+    status = Column(Enum(VoteStatus), default=VoteStatus.PENDING, nullable=False)
