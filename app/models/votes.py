@@ -5,7 +5,6 @@ from app.database import Base
 
 
 class VoteStatus(enum.Enum):
-    PENDING = "pending"
     VALID = "valid"
     REJECTED = "rejected"
 
