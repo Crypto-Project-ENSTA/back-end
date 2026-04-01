@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # typed Python attributes while keeping the code clean and maintainable.
     
     ENV: str
-    ALLOWED_ORIGINS: str
+    ALLOWED_ORIGINS: list[str] # Pydantic automatically splits by comma
     DATABASE_URL: str
     
 settings=Settings()
