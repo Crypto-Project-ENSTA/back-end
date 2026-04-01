@@ -28,5 +28,5 @@ class Settings(BaseSettings):
     ENV: str
     ALLOWED_ORIGINS: str
     DATABASE_URL: str
-    
+
 settings=Settings()

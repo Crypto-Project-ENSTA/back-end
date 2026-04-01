@@ -15,7 +15,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from app.config import settings
 
-
 isSqlite = settings.DATABASE_URL.startswith('sqlite')
 
 #1 Create_engine
@@ -49,3 +48,5 @@ else:
 # - You would need to define tables manually and write raw SQL for CRUD
 # In short, you lose all the conveniences of the ORM and must manage tables and queries manually.
 Base = declarative_base()
+
+

@@ -1,5 +1,0 @@
-local.db
-.env.local
-.env
-*.pyc
-__pycache__/
