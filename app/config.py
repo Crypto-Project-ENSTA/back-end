@@ -10,7 +10,7 @@ It includes critical settings such as:
 Using Pydantic's BaseSettings allows these values to be loaded from environment variables,
 making the project easy to configure for different environments (development, testing, production).
 """
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # We inherit from Pydantic's BaseSettings so that each class 
@@ -29,10 +29,4 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str
     DATABASE_URL: str
     
-<<<<<<< HEAD
-    model_config = SettingsConfigDict(env_file=".env.local")
-=======
-    model_config = SettingsConfigDict(env_file=".env")
->>>>>>> c1be64665d3bc2d0683ebb869238d656d33d50a4
-
 settings=Settings()

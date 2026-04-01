@@ -14,8 +14,7 @@ so that the rest of the application can interact with the database using ORM mod
 from sqlalchemy import create_engine 
 from sqlalchemy.orm import declarative_base
 from app.config import settings
-from sqlalchemy.orm import sessionmaker
- 
+
 
 isSqlite = settings.DATABASE_URL.startswith('sqlite')
 
@@ -50,13 +49,3 @@ else:
 # - You would need to define tables manually and write raw SQL for CRUD
 # In short, you lose all the conveniences of the ORM and must manage tables and queries manually.
 Base = declarative_base()
-
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-<<<<<<< HEAD
-)
-=======
-)
->>>>>>> c1be64665d3bc2d0683ebb869238d656d33d50a4
