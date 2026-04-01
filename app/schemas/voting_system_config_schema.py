@@ -10,5 +10,5 @@ class VotingSystemConfigSchema(BaseModel):
 voting_system_config_schema = VotingSystemConfigSchema(
     num_voters=VotingSystemConfig.num_voters,
     vote_theme=VotingSystemConfig.vote_theme,
-    choices=VotingSystemConfig.choices
+    choices=list(VotingSystemConfig.choices)
 )
