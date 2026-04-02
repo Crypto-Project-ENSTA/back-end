@@ -11,6 +11,7 @@ Using Pydantic's BaseSettings allows these values to be loaded from environment 
 making the project easy to configure for different environments (development, testing, production).
 """
 from pydantic_settings import BaseSettings,SettingsConfigDict
+from pydantic import field_validator
 
 class Settings(BaseSettings):
     # We inherit from Pydantic's BaseSettings so that each class 
@@ -25,13 +26,18 @@ class Settings(BaseSettings):
     # In short, inheritance allows us to treat environment variables as
     # typed Python attributes while keeping the code clean and maintainable.
     
+    # TODO : needs to be commented
     model_config = SettingsConfigDict(
-        env_list_separator=","  # tells pydantic-settings to split lists by comma
+        env_file=".env.local",
     )
 
     ENV: str
-    ALLOWED_ORIGINS: str # Pydantic automatically splits by comma
+    ALLOWED_ORIGINS: str  
     DATABASE_URL: str
     
-    
+    # TODO : needs to be commented
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+
 settings=Settings()

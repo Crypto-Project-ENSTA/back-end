@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from app.routers import voting_system_config_router
 from fastapi.middleware.cors import CORSMiddleware
-from config import settings
+from app.config import settings
 app = FastAPI()
 
 app.include_router(voting_system_config_router.router)
@@ -11,7 +11,7 @@ app.include_router(voting_system_config_router.router)
 # Without this, the browser blocks all cross-origin requests by default.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,  # list of allowed frontend URLs
+    allow_origins=settings.allowed_origins_list,  # list of allowed frontend URLs
     allow_credentials=True,                  # allow cookies and JWT tokens
     allow_methods=["*"],                     # allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],                     # allow all headers (Authorization, etc.)
