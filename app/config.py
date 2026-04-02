@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     )
 
     ENV: str
-    ALLOWED_ORIGINS: list[str] # Pydantic automatically splits by comma
+    ALLOWED_ORIGINS: str # Pydantic automatically splits by comma
     DATABASE_URL: str
     
     
