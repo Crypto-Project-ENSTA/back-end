@@ -18,4 +18,4 @@ class Vote(Base):
 
     submitted_at = Column(DateTime, default=datetime.utcnow)
 
-    status = Column(Enum(VoteStatus), default=VoteStatus.PENDING, nullable=False)
+    status = Column(Enum(VoteStatus), default=VoteStatus.VALID, nullable=False)
