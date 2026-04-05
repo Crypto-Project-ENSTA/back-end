@@ -30,7 +30,7 @@ else:
     # - If yes → use it
     # - If no → reconnect automatically
     # In short: it prevents crashes by ensuring the connection works
-    enigne = create_engine(settings.DATABASE_URL,pool_pre_ping = True)
+    engine = create_engine(settings.DATABASE_URL,pool_pre_ping = True)
     
 #2 create Base class
 
