@@ -12,7 +12,7 @@ so that the rest of the application can interact with the database using ORM mod
 """
 
 from sqlalchemy import create_engine 
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base,sessionmaker
 from app.config import settings
 
 
@@ -49,3 +49,35 @@ else:
 # - You would need to define tables manually and write raw SQL for CRUD
 # In short, you lose all the conveniences of the ORM and must manage tables and queries manually.
 Base = declarative_base()
+
+
+"""
+SessionLocal - SQLAlchemy Session Factory
+
+This creates a factory for SQLAlchemy sessions using `sessionmaker`. Each session
+represents a **workspace** for interacting with the database.
+
+Parameters:
+
+1. autocommit (bool)
+    - Controls whether changes are **automatically saved to the database**.
+    - autocommit=True  -> changes are persisted immediately (rarely used in modern FastAPI apps).
+    - autocommit=False -> changes are staged in the session; must call db.commit() to save.
+
+2. autoflush (bool)
+    - Controls whether **staged changes are sent to the DB automatically before queries**.
+    - autoflush=True  -> pending changes are flushed automatically, so queries see uncommitted data.
+    - autoflush=False -> queries only see data already committed; staged changes remain invisible until flush or commit.
+    - **Note:** autoflush ≠ commit. Flushed data is visible to queries but **not permanently saved** until commit.
+
+3. bind
+    - The database engine to connect to (created with create_engine()).
+
+Important Notes:
+    - Always use `db.commit()` to persist changes permanently.
+    - Use `db.rollback()` if an error occurs to undo staged changes.
+    - Use `db.close()` to release the connection after use.
+    - In FastAPI, use this with a dependency function to provide `db: Session` to endpoints.
+
+"""
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
