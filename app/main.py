@@ -1,6 +1,6 @@
 # TODO: Keep minimal setup for now; extend when implementing routers
 from fastapi import FastAPI
-from app.routers import voting_system_config_router
+from app.routers import voting_system_config_router , voters_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 
@@ -39,6 +39,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(voting_system_config_router.router)
+app.include_router(voters_router.router)
 
 # Allow the frontend to communicate with this API from a different domain.
 # Without this, the browser blocks all cross-origin requests by default.
