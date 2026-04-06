@@ -13,6 +13,7 @@ from app.models.counted_votes import CountedVote
 
 from app.database import Base, engine
 from contextlib import asynccontextmanager
+from app.services.email_sender_service import start_voter_watcher, watcher_thread
 
 
 """
@@ -29,13 +30,20 @@ Shutdown (after yield):
 
 This replaces the deprecated @app.on_event("startup") and @app.on_event("shutdown") methods.
 """
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup
     Base.metadata.create_all(bind=engine)
     print("Database tables created or already exist!")
+    start_voter_watcher()
+    print("Voter watcher started!")
+
     yield
+    # Shutdown
+    if watcher_thread and watcher_thread.is_alive():
+        watcher_thread.join(timeout=5)
     print("App shutdown complete!")
-    
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(voting_system_config_router.router)
