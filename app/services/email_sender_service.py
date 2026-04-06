@@ -283,10 +283,12 @@ def send_email(to_email: str):
     msg["To"] = to_email
     msg.attach(MIMEText(html_body, "html"))
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:  
+        server.ehlo()
+        server.starttls()                                  
+        server.ehlo()
         server.login(settings.EMAIL_FROM, settings.EMAIL_PASSWORD)
         server.sendmail(settings.EMAIL_FROM, to_email, msg.as_string())
-        
     return n1,n2
 
 def watch_voters():
