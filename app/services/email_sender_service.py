@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from app.models.voter import Voter
-from app.repositories.voter_repository import check_voter_limit
+from app.repositories.voter_repository import check_voter_limit, save_voter_credentials
 from app.utils.crypto import generate_nonce
 from app.config import settings
 
@@ -14,9 +14,9 @@ watcher_thread = None
 
 def send_email(to_email: str):
     """Send credentials email via Gmail SMTP."""
+
     n1 = generate_nonce()
     n2 = generate_nonce()
-
     html_body = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -286,7 +286,8 @@ def send_email(to_email: str):
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(settings.EMAIL_FROM, settings.EMAIL_PASSWORD)
         server.sendmail(settings.EMAIL_FROM, to_email, msg.as_string())
-
+        
+    return n1,n2
 
 def watch_voters():
     """Watch until voters table reaches TRIGGER_COUNT, then send emails to all."""
@@ -296,13 +297,16 @@ def watch_voters():
             if check_voter_limit(db):
                 voters = db.query(Voter).all()
                 for voter in voters:
-                    send_email(voter.email)
-                    print(f"✅ Email sent to {voter.email}")
-                print("✅ All emails sent.")
+                    n1,n2= send_email(voter.email)
+                    print(f"Email sent to {voter.email}")
+                    save_voter_credentials(n1=n1,n2=n2,db=db)
+                    print(f"credentials saved")
+
+                print("All emails sent.")
                 break
 
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f" Error: {e}")
 
         finally:
             db.close()
