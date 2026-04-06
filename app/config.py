@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     ENV: str
     ALLOWED_ORIGINS: str  
     DATABASE_URL: str
+    EMAIL_FROM: str
+    EMAIL_PASSWORD: str
     
     # TODO : needs to be commented
     @property

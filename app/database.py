@@ -81,3 +81,29 @@ Important Notes:
 
 """
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+
+"""
+FastAPI Database Dependency - get_db
+
+This function provides a database session to FastAPI endpoints using dependency injection.
+
+It follows a generator-based pattern with `yield`, which allows FastAPI to manage
+the lifecycle of the database session automatically:
+
+- A new session is created for each request
+- The session is provided to the endpoint via `yield`
+- After the request finishes (success or error), the session is safely closed
+
+Why use this pattern:
+- Prevents database connection leaks
+- Ensures each request has an isolated session
+- Guarantees cleanup even if an exception occurs
+"""
+def get_db() :
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

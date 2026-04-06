@@ -1,6 +1,6 @@
 # TODO: Keep minimal setup for now; extend when implementing routers
 from fastapi import FastAPI
-from app.routers import voting_system_config_router
+from app.routers import voting_system_config_router , voters_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 
@@ -13,6 +13,7 @@ from app.models.counted_votes import CountedVote
 
 from app.database import Base, engine
 from contextlib import asynccontextmanager
+from app.services.email_sender_service import start_voter_watcher, watcher_thread
 
 
 """
@@ -29,16 +30,24 @@ Shutdown (after yield):
 
 This replaces the deprecated @app.on_event("startup") and @app.on_event("shutdown") methods.
 """
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup
     Base.metadata.create_all(bind=engine)
     print("Database tables created or already exist!")
+    start_voter_watcher()
+    print("Voter watcher started!")
+
     yield
+    # Shutdown
+    if watcher_thread and watcher_thread.is_alive():
+        watcher_thread.join(timeout=5)
     print("App shutdown complete!")
-    
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(voting_system_config_router.router)
+app.include_router(voters_router.router)
 
 # Allow the frontend to communicate with this API from a different domain.
 # Without this, the browser blocks all cross-origin requests by default.
