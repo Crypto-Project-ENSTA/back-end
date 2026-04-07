@@ -1,3 +1,6 @@
+import traceback
+
+from fastapi import Request
 from google.oauth2.credentials import Credentials
 from app.database import SessionLocal
 import threading
@@ -287,44 +290,77 @@ def send_email(to_email: str):
     msg["From"] = settings.EMAIL_FROM
     msg["To"] = to_email
     msg.attach(MIMEText(html_body, "html"))
+    print(f" Building Gmail API credentials...")
+    try:
+        creds = Credentials(
+            token=None,
+            refresh_token=settings.GMAIL_REFRESH_TOKEN,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=settings.GMAIL_CLIENT_ID,
+            client_secret=settings.GMAIL_CLIENT_SECRET,
+        )
+        print(f" Credentials object created")
 
-    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+        print(f" Refreshing token...")
+        creds.refresh(Request())
+        print(f" Token refreshed successfully")
 
-    creds = Credentials(
-        token=settings.GMAIL_TOKEN,
-        refresh_token=settings.GMAIL_REFRESH_TOKEN,
-        token_uri="https://oauth2.googleapis.com/token",
-        client_id=settings.GMAIL_CLIENT_ID,
-        client_secret=settings.GMAIL_CLIENT_SECRET,
-    )
+    except Exception as creds_error:
+        print(f" Credentials error: {creds_error}")
+        traceback.print_exc()
+        raise
 
-    service = build("gmail", "v1", credentials=creds)
-    service.users().messages().send(
-        userId="me",
-        body={"raw": raw}
-    ).execute()
+    try:
+        raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+        print(f" Sending via Gmail API...")
+        service = build("gmail", "v1", credentials=creds)
+        result = service.users().messages().send(
+            userId="me",
+            body={"raw": raw}
+        ).execute()
+        print(f" Gmail API response: {result}")
 
+    except Exception as send_error:
+        print(f" Gmail API send error: {send_error}")
+        traceback.print_exc()
+        raise
 
     return n1, n2
 
+
 def watch_voters():
     """Watch until voters table reaches TRIGGER_COUNT, then send emails to all."""
+    print(" Voter watcher started...")
     while True:
         db = SessionLocal()
         try:
-            if check_voter_limit(db):
-                voters = db.query(Voter).all()
-                for voter in voters:
-                    n1,n2= send_email(voter.email)
-                    print(f"Email sent to {voter.email}")
-                    save_voter_credentials(n1=n1,n2=n2,db=db)
-                    print(f"credentials saved")
+            print(" Checking voter limit...")
+            limit_reached = check_voter_limit(db)
+            print(f" Limit reached: {limit_reached}")
 
-                print("All emails sent.")
+            if limit_reached:
+                voters = db.query(Voter).all()
+                print(f" Found {len(voters)} voters")
+
+                for voter in voters:
+                    try:
+                        n1, n2 = send_email(voter.email)
+                        print(f" Email sent to {voter.email}")
+                        save_voter_credentials(n1=n1, n2=n2, db=db)
+                        print(f" Credentials saved for {voter.email}")
+                    except Exception as voter_error:
+                        print(f" Failed for {voter.email}: {voter_error}")
+                        traceback.print_exc()
+                        continue
+
+                print(" All emails sent.")
                 break
+            else:
+                print(" Limit not reached, waiting 10s...")
 
         except Exception as e:
-            print(f" Error: {e}")
+            print(f" Unexpected error in watch_voters: {e}")
+            traceback.print_exc()
 
         finally:
             db.close()
