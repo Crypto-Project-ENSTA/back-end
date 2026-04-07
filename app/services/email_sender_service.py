@@ -1,6 +1,6 @@
 import traceback
 
-from fastapi import Request
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from app.database import SessionLocal
 import threading
