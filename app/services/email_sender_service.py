@@ -356,11 +356,7 @@ def watch_voters():
 
                 print(" All emails sent.")
 
-<<<<<<< HEAD
                 # VERY IMPORTANT
-=======
-                
->>>>>>> d0314f6 ([Wed Apr  8 12:20:29 AM CET 2026] feat/voting-config-model-and-repo :update voting system configuration router and schema; remove unused imports and enhance config retrieval)
                 mark_emails_sent(db)
                 print(" Marked as sent. Stopping watcher.")
             print("email is sended")
