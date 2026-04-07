@@ -35,7 +35,10 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str  
     DATABASE_URL: str
     EMAIL_FROM: str
-    EMAIL_PASSWORD: str
+    GMAIL_TOKEN: str
+    GMAIL_REFRESH_TOKEN: str
+    GMAIL_CLIENT_ID: str
+    GMAIL_CLIENT_SECRET: str
     
     # TODO : needs to be commented
     @property

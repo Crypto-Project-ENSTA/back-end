@@ -3,3 +3,4 @@ local.db
 .env
 *.pyc
 __pycache__/
+credentials.json

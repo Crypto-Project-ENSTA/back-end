@@ -1,6 +1,6 @@
+from google.oauth2.credentials import Credentials
 from app.database import SessionLocal
 import threading
-import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -11,12 +11,18 @@ from app.config import settings
 
 watcher_thread = None
 
+import base64
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import json
 
 def send_email(to_email: str):
-    """Send credentials email via Gmail SMTP."""
-
+    """Send credentials email via Gmail API with Service Account."""
     n1 = generate_nonce()
     n2 = generate_nonce()
+
     html_body = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -276,20 +282,30 @@ def send_email(to_email: str):
     </body>
     </html>
     """
-
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "Confidential: Your Secure Voting Credentials"
     msg["From"] = settings.EMAIL_FROM
     msg["To"] = to_email
     msg.attach(MIMEText(html_body, "html"))
 
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:  
-        server.ehlo()
-        server.starttls()                                  
-        server.ehlo()
-        server.login(settings.EMAIL_FROM, settings.EMAIL_PASSWORD)
-        server.sendmail(settings.EMAIL_FROM, to_email, msg.as_string())
-    return n1,n2
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+
+    creds = Credentials(
+        token=settings.GMAIL_TOKEN,
+        refresh_token=settings.GMAIL_REFRESH_TOKEN,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=settings.GMAIL_CLIENT_ID,
+        client_secret=settings.GMAIL_CLIENT_SECRET,
+    )
+
+    service = build("gmail", "v1", credentials=creds)
+    service.users().messages().send(
+        userId="me",
+        body={"raw": raw}
+    ).execute()
+
+
+    return n1, n2
 
 def watch_voters():
     """Watch until voters table reaches TRIGGER_COUNT, then send emails to all."""
