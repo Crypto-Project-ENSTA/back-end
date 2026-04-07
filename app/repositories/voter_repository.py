@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.schemas.voter import Voter as VoterSchema
 from app.models.voter import Voter as VoterModel
-from app.backend_config.voting_system_config import VotingSystemConfig
+# from app.backend_config.voting_system_config import VotingSystemConfig
 from app.models.credentials import Credential
 from app.utils.crypto import hash_n2
 
