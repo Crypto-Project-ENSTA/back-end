@@ -10,7 +10,7 @@ from app.models.voter import Voter
 from app.models.votes import Vote
 from app.models.credentials import Credential
 from app.models.counted_votes import CountedVote
-
+from app.models.voting_system_config_model import VotingConfigModel
 from app.database import Base, engine
 from contextlib import asynccontextmanager
 from app.services.email_sender_service import start_voter_watcher, watcher_thread
