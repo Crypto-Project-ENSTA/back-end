@@ -5,8 +5,8 @@ from pydantic import BaseModel
 class VotingSystemConfigSchema(BaseModel):
     
     num_voters : int
-    vote_theme : str
-    choices : list[str]
+    vote_theme : str |None
+    choices : list[str] |None
     
 # # create instance directly from hardcoded class
 # voting_system_config_schema = VotingSystemConfigSchema(

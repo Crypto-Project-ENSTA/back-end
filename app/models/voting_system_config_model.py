@@ -9,4 +9,4 @@ class VotingConfigModel(Base):
     emails_sent = Column(Boolean, default=False)
     num_voters = Column(Integer, default=5)
     vote_theme = Column(String, nullable=True)
-    choices = Column(JSON, nullable=True)
+    choices = Column(JSON, nullable=True, default=[])  

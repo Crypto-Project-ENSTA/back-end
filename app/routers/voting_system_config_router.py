@@ -23,4 +23,8 @@ router = APIRouter(prefix ='/config')
 def get_voting_system_config(db: Session = Depends(get_db)):
     config = get_voting_config(db)
 
-    return VotingSystemConfigSchema(config.num_voters,config.vote_theme,config.choices)
+    return VotingSystemConfigSchema(
+        num_voters=config.num_voters,
+        vote_theme=config.vote_theme,
+        choices=config.choices or []
+    )
