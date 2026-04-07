@@ -1,5 +1,8 @@
-from fastapi import APIRouter
-from app.schemas.voting_system_config_schema import voting_system_config_schema,VotingSystemConfigSchema
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.repositories.voting_system_config_repo import get_voting_config
+from app.schemas.voting_system_config_schema import VotingSystemConfigSchema
 
 """
 Router: Voting System Configuration API
@@ -16,6 +19,8 @@ Returns the configuration as a JSON object using the VotingSystemConfigSchema Py
 """
 router = APIRouter(prefix ='/config')
 
-@router.get('/voting-system-config',response_model = VotingSystemConfigSchema)
-def get_voting_system_config():
-    return voting_system_config_schema
+@router.get('/voting-system-config', response_model=VotingSystemConfigSchema)
+def get_voting_system_config(db: Session = Depends(get_db)):
+    config = get_voting_config(db)
+
+    return VotingSystemConfigSchema(config.num_voters,config.vote_theme,config.choices)

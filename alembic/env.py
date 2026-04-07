@@ -10,6 +10,7 @@ from app.models import voter
 from app.models import counted_votes
 from app.models import votes
 from app.models import credentials
+from app.models import voting_system_config_model
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
