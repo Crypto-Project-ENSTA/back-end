@@ -8,7 +8,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from app.models.voter import Voter
-from app.repositories.voter_repository import check_voter_limit, save_voter_credentials
+from app.repositories.voter_repository import  save_voter_credentials
 from app.utils.crypto import generate_nonce
 from app.config import settings
 
@@ -356,11 +356,15 @@ def watch_voters():
 
                 print(" All emails sent.")
 
+<<<<<<< HEAD
                 # VERY IMPORTANT
+=======
+                
+>>>>>>> d0314f6 ([Wed Apr  8 12:20:29 AM CET 2026] feat/voting-config-model-and-repo :update voting system configuration router and schema; remove unused imports and enhance config retrieval)
                 mark_emails_sent(db)
-
-            else:
-                print(" Condition not met OR emails already sent, waiting 10s...")
+                print(" Marked as sent. Stopping watcher.")
+            print("email is sended")
+            break  
 
         except Exception as e:
             print(f" Unexpected error in watch_voters: {e}")

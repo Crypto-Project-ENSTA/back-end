@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 class VotingSystemConfigSchema(BaseModel):
     
-    emails_sent: bool
     num_voters : int
     vote_theme : str
     choices : list[str]
