@@ -1,9 +1,11 @@
 from fastapi import APIRouter,Depends,HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.dependencies import get_administrator_service
+from app.schemas.n1_request import N1Request
 from app.schemas.voter import Voter
 from app.repositories import voter_repository
-
+from app.services.administrator_service import AdministratorService
 
 router = APIRouter(prefix="/voters",)
 
@@ -21,3 +23,13 @@ def voter_register(voter : Voter, db:Session = Depends(get_db) ):
         raise HTTPException(status_code=400,detail=f"Error registering voter: {str(e)}")
     
     
+@router.post('/check_n1')
+def check_n1(voter_n1 : N1Request,service: AdministratorService = Depends(get_administrator_service)):
+    try:
+        result = service.request_commissioner_n1_exist(voter_n1.n1)
+        if result:
+            return {"is_N1_exist": True}
+        else:
+            return {"is_N1_exist": False}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
