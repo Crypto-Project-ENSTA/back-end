@@ -1,0 +1,51 @@
+e-voting-back-end/
+├── app/
+│   ├── main.py                     # FastAPI app entry point (Walid)
+│   ├── config.py                   # Settings, env vars (Walid)
+│   ├── database.py                 # SQLAlchemy engine + session (Walid)
+│   ├── dependencies.py             # Shared FastAPI dependencies (Walid)
+│   │
+│   ├── models/                     # SQLAlchemy ORM models (Sophia)
+│   │   ├── __init__.py
+│   │   ├── election.py             # Election config (theme, voter pool size) (Sophia)
+│   │   ├── voter.py                # Voter credentials (N1, hashed_N2) (Sophia)
+│   │   ├── ballot.py               # Ballot (vote, N2, random_bits, admin_signature) (Sophia)
+│   │   └── encrypted_vote.py       # Encrypted ballots stored by anonymizer (Sophia)
+│   │
+│   ├── schemas/                    # Pydantic request/response schemas (Walid)
+│   │   ├── __init__.py
+│   │   ├── voter.py                # Auth request/response (N1 submission) (Walid)
+│   │   ├── ballot.py               # Ballot creation, masked ballot, sign request (Walid)
+│   │   ├── vote.py                 # Encrypted vote submission (Walid)
+│   │   └── result.py               # Vote count results (Walid)
+│   │
+│   ├── routers/                    # FastAPI route handlers (voter-facing only) (Walid)
+│   │   ├── __init__.py
+│   │   ├── auth.py                 # POST /auth/login (N1 authentication) (Walid)
+│   │   ├── ballot.py               # POST /ballot/create, /ballot/sign-request (Walid)
+│   │   └── vote.py                 # POST /vote/submit, GET /vote/public-key, POST /vote/encrypt (Walid)
+│   │
+│   ├── services/                   # Internal subprograms (no direct HTTP exposure) (Walid & Amel)
+│   │   ├── __init__.py
+│   │   ├── voting_system_service.py  # Generate N1+N2, dispatch via mail, hash N2, store (Walid & Amel)
+│   │   ├── commissioner_service.py   # Check N1 validity, delete N1, check hashed N2 (Walid & Amel)
+│   │   ├── administrator_service.py  # Forward N1 to comm, sign masked ballot, store RSA key (Walid & Amel)
+│   │   ├── anonymizer_service.py     # Receive encrypted vote, verify N1, store in DB (Walid & Amel)
+│   │   └── counter_service.py        # Provide pubkey, request votes, decrypt, verify sig, tally (Walid & Amel)
+│   │
+│   ├── repositories/               # CRUD and DB access (Walid & Sophia)
+│   │   ├── __init__.py
+│   │   ├── voter_repository.py     # Voter CRUD (find by N1, store, delete) (Walid & Sophia)
+│   │   ├── ballot_repository.py    # Ballot CRUD (create, update signature) (Walid & Sophia)
+│   │   ├── election_repository.py  # Election config reads (Walid & Sophia)
+│   │   └── vote_repository.py      # Encrypted vote reads/writes (Walid & Sophia)
+│   │
+│   └── utils/
+│       ├── __init__.py
+│       ├── crypto.py                # RSA, blind signature, masking/unmasking, encryption (Amel)
+│       //├── security.py            # JWT helpers, token generation (Walid)
+│       └── exceptions.py           # Custom HTTP exceptions (Walid)
+│
+├── alembic/                        # Database migrations (Walid)
+//├── tests/                          # pytest test suite (Walid)
+└── .env                             # Environment variables (Walid)

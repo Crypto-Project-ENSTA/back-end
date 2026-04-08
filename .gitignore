@@ -1,1 +1,6 @@
+local.db
 .env.local
+.env
+*.pyc
+__pycache__/
+credentials.json
