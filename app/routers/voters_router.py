@@ -1,4 +1,5 @@
 from fastapi import APIRouter,Depends,HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_administrator_service
@@ -12,8 +13,16 @@ router = APIRouter(prefix="/voters",)
 @router.post('/register')
 def voter_register(voter : Voter, db:Session = Depends(get_db) ):
     try:
+        if voter_repository.check_email_existe(db=db, voter=voter):
+            return JSONResponse(
+                status_code=409,
+                content={"status": "error", "message": "Email already exists", "voter": voter.email}
+            )
         created_voter = voter_repository.create_voter(db,voter)
-        return {"status": "success", "voter": created_voter.email}
+        return JSONResponse(
+            status_code=201,
+            content={"status": "success", "message": "Voter registered successfully", "voter": created_voter.email}
+        )
     except Exception as e:
         """
         - 400 Bad Request: If registration fails due to invalid input or other errors.
