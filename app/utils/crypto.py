@@ -48,3 +48,31 @@ def hash_n2(n2: str) -> str:
     if not n2:
         raise ValueError("n2 cannot be empty")
     return hashlib.sha256(n2.encode()).hexdigest()
+from app.schemas.ballot import Ballot
+
+
+def create_ballot(vote: str, N2: str, random_bits: str) -> Ballot:
+    return Ballot(
+        vote=vote,
+        N2=N2,
+        random_bits=random_bits
+    )
+
+
+def mask_ballot(ballot: Ballot) -> Ballot:
+    masked_value = f"masked({ballot.vote}-{ballot.N2}-{ballot.random_bits})"
+    ballot.masked_ballot = masked_value
+    return ballot
+
+
+def request_signature(masked_ballot: str) -> str:
+    return f"signed({masked_ballot})"
+
+
+def unmask_signature(ballot: Ballot) -> Ballot:
+    if not ballot.masked_signature:
+        raise ValueError("Masked signature is missing")
+
+    admin_signature = ballot.masked_signature.replace("signed(masked(", "").replace("))", ")")
+    ballot.admin_signature = admin_signature
+    return ballot
