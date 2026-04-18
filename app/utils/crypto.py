@@ -1,7 +1,7 @@
 import secrets
 import hashlib
 import string
-from app.dataclass.voter_ballot import VoterBallotDTO,MaskedBallotDTO
+from app.dataclass.voter_ballot import VoterBallotDTO,MaskedBallotDTO,SignedBallotDTO
 
 """
 Generate a cryptographically secure random alphanumeric code (nonce).
@@ -94,10 +94,10 @@ def mask_ballot(voter_ballot: VoterBallotDTO, administrator_pub_key: tuple[int, 
     # Compute blinded mask using RSA exponentiation:
     # k^e mod N is computed efficiently using Python's built-in pow()
     # Then multiply with message and reduce mod N
-    masked_message = (m * pow(k, e, N)) % N
+    masked_ballot = (m * pow(k, e, N)) % N
 
     # Return both the masked message and the blinding factor k
-    return MaskedBallotDTO(masked_message=masked_message, k=k)
+    return MaskedBallotDTO(masked_ballot=masked_ballot, k=k)
     
     
 def generate_coprime(N: int) -> int:
@@ -116,7 +116,25 @@ def generate_coprime(N: int) -> int:
             print('the k is :',k)
             return k
         
-        
+def sign_masked_ballot(masked_ballot :MaskedBallotDTO,admin_private_key : int, admin_N_public_key : int):
+    """
+    Administrator signs the masked ballot (blind signing).
+    
+    According to the protocol:
+    - Administrator receives masked message: m' = m * k^e (mod N)
+    - Administrator computes: m'' = (m')^d (mod N)
+    - Administrator never knows the original message m
+    """
+    
+    # RSA private exponent (used for signing)
+    d = admin_private_key
+    # RSA modulus (shared public parameter)
+    N = admin_N_public_key
+    # Extract masked message and apply RSA signing: (m')^d mod N
+    signed_masked_ballot = pow(masked_ballot.masked_ballot, d, N)
+    # Return signed masked ballot (still blinded)
+    return SignedBallotDTO(signed_masked_ballot=signed_masked_ballot)
+    
 """comment amel codes"""
 
 # def _ballot_to_int(ballot: Ballot) -> int:

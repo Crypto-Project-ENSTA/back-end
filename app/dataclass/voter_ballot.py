@@ -36,8 +36,16 @@ class VoterBallotDTO:
 
 @dataclass
 class MaskedBallotDTO:
-    masked_message: int
+    masked_ballot: int
     k: int
     
     def __str__(self):
-        return f'{self.masked_message},{self.k}'
+        return f'{self.masked_ballot},{self.k}'
+    
+
+@dataclass
+class SignedBallotDTO:
+    signed_masked_ballot : int
+    
+    def __str__(self):
+        return f'{self.signed_masked_ballot}'

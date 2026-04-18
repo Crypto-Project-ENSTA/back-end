@@ -1,4 +1,4 @@
-from app.utils.crypto import generate_nonce, hash_n2, create_ballot,mask_ballot
+from app.utils.crypto import generate_nonce, hash_n2, create_ballot,mask_ballot,sign_masked_ballot
 # generate nonce
 n2 = generate_nonce()
 print("Generated N2:", n2)
@@ -13,3 +13,6 @@ print('the int ballot is :', ballot.to_int())
 
 masked_ballot = mask_ballot(voter_ballot=ballot,administrator_pub_key=[12,10**617])# N = 2048 bits
 print('the masked ballot is :',masked_ballot)
+
+signed_masked_ballot = sign_masked_ballot(masked_ballot=masked_ballot,admin_N_public_key=10**617,admin_private_key=100)
+print('the signed masked ballot is :',signed_masked_ballot)
