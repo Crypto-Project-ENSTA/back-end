@@ -1,12 +1,7 @@
 import secrets
 import hashlib
 import string
-import random
-import math
-
-from app.schemas.ballot import Ballot, MaskedBallot, MaskedSignature
-# from app.crypto.key_manager import load_public_key, load_private_key
-
+from app.dataclass.voter_ballot import VoterBallotDTO
 
 """
 Generate a cryptographically secure random alphanumeric code (nonce).
@@ -58,7 +53,19 @@ def hash_n2(n2: str) -> str:
 
 
 
+def create_ballot(n2: str, vote: str):
+    """
+    Create a new voter ballot DTO with a secure random component.
 
+    This function generates a ballot containing:
+    - vote: the voter's choice
+    - n2: a nonce or identifier used in the protocol
+    - random_bits: a cryptographically secure random string
+      to ensure uniqueness and prevent replay attacks
+    
+    """
+    random_bits = secrets.token_urlsafe(16)
+    return VoterBallotDTO(vote=vote, n2=n2, random_bits=random_bits)
 
 
 
