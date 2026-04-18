@@ -1,7 +1,7 @@
 import secrets
 import hashlib
 import string
-from app.dataclass.voter_ballot import VoterBallotDTO,MaskedBallotDTO,SignedBallotDTO
+from app.dataclass.voter_ballot import VoterBallotDTO,MaskedBallotDTO,SignedMaskedBallotDTO,SignedBallotDTO
 
 """
 Generate a cryptographically secure random alphanumeric code (nonce).
@@ -133,8 +133,32 @@ def sign_masked_ballot(masked_ballot :MaskedBallotDTO,admin_private_key : int, a
     # Extract masked message and apply RSA signing: (m')^d mod N
     signed_masked_ballot = pow(masked_ballot.masked_ballot, d, N)
     # Return signed masked ballot (still blinded)
-    return SignedBallotDTO(signed_masked_ballot=signed_masked_ballot)
+    return SignedMaskedBallotDTO(signed_masked_ballot=signed_masked_ballot)
+
+def unmask_signed_ballot(signed_masked_ballot : SignedMaskedBallotDTO, masked_Ballot: MaskedBallotDTO ,admin_N_public_key : int):
+    """
+    Remove the masking factor from the administrator's signature.
     
+    According to the protocol:
+    - Administrator returns: m'' = (m')^d (mod N)
+    - Voter calculates: s = m'' / k (mod N)
+    - Result s is a valid signature: s^e = m (mod N)
+    """
+    # Calculate modular inverse of k
+    k_inverse = mod_inverse(masked_Ballot.k, admin_N_public_key)
+    
+    # Calculate s = m'' * k^(-1) (mod N)
+    signed_ballot = (signed_masked_ballot.signed_masked_ballot * k_inverse) % admin_N_public_key
+    
+    return SignedBallotDTO(signed_ballot=signed_ballot)
+
+def mod_inverse(a: int, m: int) -> int:
+    try:
+        return pow(a, -1, m)
+    except ValueError:
+        raise ValueError(f"No modular inverse for {a} mod {m}")
+
+
 """comment amel codes"""
 
 # def _ballot_to_int(ballot: Ballot) -> int:
