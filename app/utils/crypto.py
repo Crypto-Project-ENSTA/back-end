@@ -1,8 +1,7 @@
 import secrets
 import hashlib
-import secrets
 import string
-
+from app.dataclass.voter_ballot import VoterBallotDTO,MaskedBallotDTO,SignedMaskedBallotDTO,SignedBallotDTO
 
 """
 Generate a cryptographically secure random alphanumeric code (nonce).
@@ -25,6 +24,7 @@ def generate_nonce(length: int = 12) -> str:
     alphabet = string.ascii_uppercase + string.digits  # A-Z + 0-9
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
+
 """
 Hash a nonce (N2) using SHA-256.
 
@@ -44,7 +44,191 @@ Hash a nonce (N2) using SHA-256.
     5. The resulting string is returned as the hashed representation of the nonce.
 
 """
+
 def hash_n2(n2: str) -> str:
     if not n2:
         raise ValueError("n2 cannot be empty")
     return hashlib.sha256(n2.encode()).hexdigest()
+
+
+
+
+def create_ballot(n2: str, vote: str):
+    """
+    Create a new voter ballot DTO with a secure random component.
+
+    This function generates a ballot containing:
+    - vote: the voter's choice
+    - n2: a nonce or identifier used in the protocol
+    - random_bits: a cryptographically secure random string
+      to ensure uniqueness and prevent replay attacks
+    
+    """
+    random_bits = secrets.token_urlsafe(16)
+    return VoterBallotDTO(vote=vote, n2=n2, random_bits=random_bits)
+
+
+def mask_ballot(voter_ballot: VoterBallotDTO, administrator_pub_key: tuple[int, int]):
+    """
+    Masks (blinds) a voter ballot using RSA-style blinding.
+
+    This prevents the administrator from seeing the original message
+    while still allowing cryptographic operations on it.
+    """
+    
+    e, N = administrator_pub_key  # RSA public key (exponent, modulus)
+
+    # Convert the ballot object into a large integer representation
+    m = voter_ballot.to_int()
+    print('the integer message :', m)
+
+    # Ensure the message fits inside the RSA modulus
+    # (RSA requires: message < N)
+    if m >= N:
+        raise ValueError(f"Ballot message too large for RSA modulus N={N}")
+
+    # Generate a random number k such that gcd(k, N) = 1
+    # (needed so it is invertible modulo N)
+    k = generate_coprime(N)
+
+    # Compute blinded mask using RSA exponentiation:
+    # k^e mod N is computed efficiently using Python's built-in pow()
+    # Then multiply with message and reduce mod N
+    masked_ballot = (m * pow(k, e, N)) % N
+
+    # Return both the masked message and the blinding factor k
+    return MaskedBallotDTO(masked_ballot=masked_ballot, k=k)
+    
+    
+def generate_coprime(N: int) -> int:
+    """
+    Generate a random integer k that is coprime with N.
+    A number k is coprime with N if gcd(k, N) = 1
+    """
+    import math
+    
+    while True:
+        # Generate random number in range [2, N-1]
+        k = secrets.randbelow(N - 2) + 2
+        
+        # Check if coprime (gcd = 1)
+        if math.gcd(k, N) == 1:
+            print('the k is :',k)
+            return k
+        
+def sign_masked_ballot(masked_ballot :MaskedBallotDTO,admin_private_key : int, admin_N_public_key : int):
+    """
+    Administrator signs the masked ballot (blind signing).
+    
+    According to the protocol:
+    - Administrator receives masked message: m' = m * k^e (mod N)
+    - Administrator computes: m'' = (m')^d (mod N)
+    - Administrator never knows the original message m
+    """
+    
+    # RSA private exponent (used for signing)
+    d = admin_private_key
+    # RSA modulus (shared public parameter)
+    N = admin_N_public_key
+    # Extract masked message and apply RSA signing: (m')^d mod N
+    signed_masked_ballot = pow(masked_ballot.masked_ballot, d, N)
+    # Return signed masked ballot (still blinded)
+    return SignedMaskedBallotDTO(signed_masked_ballot=signed_masked_ballot)
+
+def unmask_signed_ballot(signed_masked_ballot : SignedMaskedBallotDTO, masked_Ballot: MaskedBallotDTO ,admin_N_public_key : int):
+    """
+    Remove the masking factor from the administrator's signature.
+    
+    According to the protocol:
+    - Administrator returns: m'' = (m')^d (mod N)
+    - Voter calculates: s = m'' / k (mod N)
+    - Result s is a valid signature: s^e = m (mod N)
+    """
+    # Calculate modular inverse of k
+    k_inverse = mod_inverse(masked_Ballot.k, admin_N_public_key)
+    
+    # Calculate s = m'' * k^(-1) (mod N)
+    signed_ballot = (signed_masked_ballot.signed_masked_ballot * k_inverse) % admin_N_public_key
+    
+    return SignedBallotDTO(signed_ballot=signed_ballot)
+
+def mod_inverse(a: int, m: int) -> int:
+    try:
+        return pow(a, -1, m)
+    except ValueError:
+        raise ValueError(f"No modular inverse for {a} mod {m}")
+
+
+"""comment amel codes"""
+
+# def _ballot_to_int(ballot: Ballot) -> int:
+#     pub = load_public_key("admin")
+#     n = pub.public_numbers().n
+#     content = f"{ballot.vote}|{ballot.N2}|{ballot.random_bits}"
+#     m = int.from_bytes(content.encode("utf-8"), "big")
+#     return m % n  # m must be < n for RSA math to hold
+
+
+# def _generate_blinding_factor(n: int) -> int:
+#     while True:
+#         k = random.randint(2, n - 1)
+#         if math.gcd(k, n) == 1:  # k must be coprime with n
+#             return k
+
+
+
+# def create_ballot(vote: str, N2: str, random_bits: str) -> Ballot:
+#     return Ballot(vote=vote, N2=N2, random_bits=random_bits)
+
+
+
+
+# def mask_ballot(ballot: Ballot) -> MaskedBallot:
+#     pub = load_public_key("admin")
+#     pub_numbers = pub.public_numbers()
+#     e = pub_numbers.e
+#     n = pub_numbers.n
+
+#     m = _ballot_to_int(ballot)
+#     k = _generate_blinding_factor(n)
+
+#     # real RSA blinding: m' = m * k^e mod n
+#     m_prime = (m * pow(k, e, n)) % n
+
+#     # store intermediate values back into ballot for unmask step later
+#     ballot.m = m
+#     ballot.k = k
+#     ballot.m_prime = m_prime
+
+#     return MaskedBallot(m_prime=m_prime)
+
+
+
+# def request_signature(masked_ballot: MaskedBallot) -> MaskedSignature:
+#     priv = load_private_key("admin")
+#     priv_numbers = priv.private_numbers()
+#     d = priv_numbers.d
+#     n = priv_numbers.public_numbers.n
+
+#     # real RSA blind signing: m'' = m'^d mod n
+#     m_pp = pow(masked_ballot.m_prime, d, n)
+
+#     return MaskedSignature(m_pp=m_pp)
+
+
+
+# def unmask_signature(ballot: Ballot, masked_signature: MaskedSignature) -> Ballot:
+#     if ballot.k is None:
+#         raise ValueError("Blinding factor k is missing — was mask_ballot called?")
+#     if ballot.m is None:
+#         raise ValueError("Encoded ballot integer m is missing — was mask_ballot called?")
+
+#     pub = load_public_key("admin")
+#     n = pub.public_numbers().n
+
+#     # real RSA unblinding: s = m'' * k^-1 mod n
+#     k_inv = pow(ballot.k, -1, n)
+#     s = (masked_signature.m_pp * k_inv) % n
+
+#     ballot.admin_signature = s
+#     return ballot
