@@ -5,7 +5,7 @@ import random
 import math
 
 from app.schemas.ballot import Ballot, MaskedBallot, MaskedSignature
-from app.crypto.key_manager import load_public_key, load_private_key
+# from app.crypto.key_manager import load_public_key, load_private_key
 
 
 """
@@ -57,74 +57,83 @@ def hash_n2(n2: str) -> str:
 
 
 
-def _ballot_to_int(ballot: Ballot) -> int:
-    pub = load_public_key("admin")
-    n = pub.public_numbers().n
-    content = f"{ballot.vote}|{ballot.N2}|{ballot.random_bits}"
-    m = int.from_bytes(content.encode("utf-8"), "big")
-    return m % n  # m must be < n for RSA math to hold
-
-
-def _generate_blinding_factor(n: int) -> int:
-    while True:
-        k = random.randint(2, n - 1)
-        if math.gcd(k, n) == 1:  # k must be coprime with n
-            return k
-
-
-
-def create_ballot(vote: str, N2: str, random_bits: str) -> Ballot:
-    return Ballot(vote=vote, N2=N2, random_bits=random_bits)
 
 
 
 
-def mask_ballot(ballot: Ballot) -> MaskedBallot:
-    pub = load_public_key("admin")
-    pub_numbers = pub.public_numbers()
-    e = pub_numbers.e
-    n = pub_numbers.n
-
-    m = _ballot_to_int(ballot)
-    k = _generate_blinding_factor(n)
-
-    # real RSA blinding: m' = m * k^e mod n
-    m_prime = (m * pow(k, e, n)) % n
-
-    # store intermediate values back into ballot for unmask step later
-    ballot.m = m
-    ballot.k = k
-    ballot.m_prime = m_prime
-
-    return MaskedBallot(m_prime=m_prime)
 
 
 
-def request_signature(masked_ballot: MaskedBallot) -> MaskedSignature:
-    priv = load_private_key("admin")
-    priv_numbers = priv.private_numbers()
-    d = priv_numbers.d
-    n = priv_numbers.public_numbers.n
+"""comment amel codes"""
 
-    # real RSA blind signing: m'' = m'^d mod n
-    m_pp = pow(masked_ballot.m_prime, d, n)
-
-    return MaskedSignature(m_pp=m_pp)
+# def _ballot_to_int(ballot: Ballot) -> int:
+#     pub = load_public_key("admin")
+#     n = pub.public_numbers().n
+#     content = f"{ballot.vote}|{ballot.N2}|{ballot.random_bits}"
+#     m = int.from_bytes(content.encode("utf-8"), "big")
+#     return m % n  # m must be < n for RSA math to hold
 
 
+# def _generate_blinding_factor(n: int) -> int:
+#     while True:
+#         k = random.randint(2, n - 1)
+#         if math.gcd(k, n) == 1:  # k must be coprime with n
+#             return k
 
-def unmask_signature(ballot: Ballot, masked_signature: MaskedSignature) -> Ballot:
-    if ballot.k is None:
-        raise ValueError("Blinding factor k is missing — was mask_ballot called?")
-    if ballot.m is None:
-        raise ValueError("Encoded ballot integer m is missing — was mask_ballot called?")
 
-    pub = load_public_key("admin")
-    n = pub.public_numbers().n
 
-    # real RSA unblinding: s = m'' * k^-1 mod n
-    k_inv = pow(ballot.k, -1, n)
-    s = (masked_signature.m_pp * k_inv) % n
+# def create_ballot(vote: str, N2: str, random_bits: str) -> Ballot:
+#     return Ballot(vote=vote, N2=N2, random_bits=random_bits)
 
-    ballot.admin_signature = s
-    return ballot
+
+
+
+# def mask_ballot(ballot: Ballot) -> MaskedBallot:
+#     pub = load_public_key("admin")
+#     pub_numbers = pub.public_numbers()
+#     e = pub_numbers.e
+#     n = pub_numbers.n
+
+#     m = _ballot_to_int(ballot)
+#     k = _generate_blinding_factor(n)
+
+#     # real RSA blinding: m' = m * k^e mod n
+#     m_prime = (m * pow(k, e, n)) % n
+
+#     # store intermediate values back into ballot for unmask step later
+#     ballot.m = m
+#     ballot.k = k
+#     ballot.m_prime = m_prime
+
+#     return MaskedBallot(m_prime=m_prime)
+
+
+
+# def request_signature(masked_ballot: MaskedBallot) -> MaskedSignature:
+#     priv = load_private_key("admin")
+#     priv_numbers = priv.private_numbers()
+#     d = priv_numbers.d
+#     n = priv_numbers.public_numbers.n
+
+#     # real RSA blind signing: m'' = m'^d mod n
+#     m_pp = pow(masked_ballot.m_prime, d, n)
+
+#     return MaskedSignature(m_pp=m_pp)
+
+
+
+# def unmask_signature(ballot: Ballot, masked_signature: MaskedSignature) -> Ballot:
+#     if ballot.k is None:
+#         raise ValueError("Blinding factor k is missing — was mask_ballot called?")
+#     if ballot.m is None:
+#         raise ValueError("Encoded ballot integer m is missing — was mask_ballot called?")
+
+#     pub = load_public_key("admin")
+#     n = pub.public_numbers().n
+
+#     # real RSA unblinding: s = m'' * k^-1 mod n
+#     k_inv = pow(ballot.k, -1, n)
+#     s = (masked_signature.m_pp * k_inv) % n
+
+#     ballot.admin_signature = s
+#     return ballot
