@@ -25,5 +25,5 @@ class AdministratorService:
         return sign_masked_ballot(
             admin_N_public_key = self.N,
             admin_private_key  = self._D,
-            masked_ballot      = masked_ballot.masked_ballot
+            masked_ballot      = masked_ballot
         )
