@@ -1,7 +1,7 @@
 import secrets
 import hashlib
 import string
-from app.dataclass.voter_ballot import VoterBallotDTO
+from app.dataclass.voter_ballot import VoterBallotDTO,MaskedBallotDTO
 
 """
 Generate a cryptographically secure random alphanumeric code (nonce).
@@ -68,9 +68,55 @@ def create_ballot(n2: str, vote: str):
     return VoterBallotDTO(vote=vote, n2=n2, random_bits=random_bits)
 
 
+def mask_ballot(voter_ballot: VoterBallotDTO, administrator_pub_key: tuple[int, int]):
+    """
+    Masks (blinds) a voter ballot using RSA-style blinding.
 
+    This prevents the administrator from seeing the original message
+    while still allowing cryptographic operations on it.
+    """
+    
+    e, N = administrator_pub_key  # RSA public key (exponent, modulus)
 
+    # Convert the ballot object into a large integer representation
+    m = voter_ballot.to_int()
+    print('the integer message :', m)
 
+    # Ensure the message fits inside the RSA modulus
+    # (RSA requires: message < N)
+    if m >= N:
+        raise ValueError(f"Ballot message too large for RSA modulus N={N}")
+
+    # Generate a random number k such that gcd(k, N) = 1
+    # (needed so it is invertible modulo N)
+    k = generate_coprime(N)
+
+    # Compute blinded mask using RSA exponentiation:
+    # k^e mod N is computed efficiently using Python's built-in pow()
+    # Then multiply with message and reduce mod N
+    masked_message = (m * pow(k, e, N)) % N
+
+    # Return both the masked message and the blinding factor k
+    return MaskedBallotDTO(masked_message=masked_message, k=k)
+    
+    
+def generate_coprime(N: int) -> int:
+    """
+    Generate a random integer k that is coprime with N.
+    A number k is coprime with N if gcd(k, N) = 1
+    """
+    import math
+    
+    while True:
+        # Generate random number in range [2, N-1]
+        k = secrets.randbelow(N - 2) + 2
+        
+        # Check if coprime (gcd = 1)
+        if math.gcd(k, N) == 1:
+            print('the k is :',k)
+            return k
+        
+        
 """comment amel codes"""
 
 # def _ballot_to_int(ballot: Ballot) -> int:
