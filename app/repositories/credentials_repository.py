@@ -9,6 +9,7 @@ def is_n1_exist(db:Session, voter_n1: str, removeN1 : bool = False) -> bool:
     if db_cred is None:
         return False
     
+    #TODO : needs to handle this case so the voter knows that his N1 is already used 
     # If already used, reject the vote
     if db_cred.used:
         return False
