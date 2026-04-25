@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.votes import Vote, VoteStatus
 
-def submit_vote(db: Session, encrypted_vote: int) -> Vote:
+def submit_encrypted_vote(db: Session, encrypted_vote: int) -> Vote:
     """
     Inserts the encrypted ballot into the ballot box (votes table).
     
