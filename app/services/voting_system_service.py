@@ -1,10 +1,11 @@
 
 from app.services.administrator_service import AdministratorService
-from app.dataclass.voter_ballot import SignedBallotDTO
+from app.dataclass.voter_ballot import SignedBallotDTO,EncryptedSignedBallotDTO
 from app.utils.crypto import (
     create_ballot,
     mask_ballot,
-    unmask_signed_ballot
+    unmask_signed_ballot,
+    encrypt_signed_ballot
 )
 class VotingSystemService:
 
@@ -48,3 +49,25 @@ class VotingSystemService:
         print('the unmaks ballot: ',unmask_sign_ballot)
         
         return unmask_sign_ballot
+    
+    
+    
+    def get_encrypted_signed_ballot(self,signed_ballot: SignedBallotDTO, counter_public_key : tuple[int,int]) -> EncryptedSignedBallotDTO:
+        """
+        Encrypts a signed ballot using the vote counter's RSA public key.
+
+        This step corresponds to "putting the ballot in an envelope" as described
+        in the electronic voting protocol. The anonymizer will receive this encrypted
+        ballot without being able to read its content, since only the counter holds
+        the private key to decrypt it.
+
+        RSA Encryption Formula:
+            c = m^e mod N
+        Where:
+            - m : the signed ballot value
+            - e : the counter's public exponent
+            - N : the counter's RSA modulus
+            - c : the resulting encrypted ballot
+        """
+        return encrypt_signed_ballot(signed_ballot, counter_public_key)
+    
