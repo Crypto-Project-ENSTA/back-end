@@ -1,7 +1,7 @@
 import secrets
 import hashlib
 import string
-from app.dataclass.voter_ballot import VoterBallotDTO,MaskedBallotDTO,SignedMaskedBallotDTO,SignedBallotDTO
+from app.dataclass.voter_ballot import VoterBallotDTO,MaskedBallotDTO,SignedMaskedBallotDTO,SignedBallotDTO, EncryptedSignedBallotDTO
 
 """
 Generate a cryptographically secure random alphanumeric code (nonce).
@@ -158,6 +158,22 @@ def mod_inverse(a: int, m: int) -> int:
     except ValueError:
         raise ValueError(f"No modular inverse for {a} mod {m}")
 
+
+def encrypt_signed_ballot(signed_ballot: SignedBallotDTO, counter_public_key : tuple[int,int]) -> EncryptedSignedBallotDTO:
+    """
+    Encrypts a signed ballot using the counter's RSA public key (e, N).
+    RSA encryption: c = m^e mod N
+    
+    """
+    m = signed_ballot.signed_ballot
+    
+    e,N = counter_public_key
+    
+    if not (0 <= m < N):
+        raise ValueError(f"Signed ballot value {m} is out of range [0, {N - 1}]")
+
+    encrypt_signed_ballot = pow(m, e, N)  
+    return EncryptedSignedBallotDTO(encrypted_signed_ballot=encrypt_signed_ballot)
 
 """comment amel codes"""
 

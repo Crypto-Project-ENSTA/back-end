@@ -56,3 +56,11 @@ class SignedBallotDTO:
     
     def __str__(self):
         return f'{self.signed_ballot}'
+    
+    
+@dataclass
+class EncryptedSignedBallotDTO:
+    encrypted_signed_ballot: int
+
+    def __str__(self):
+        return f'{self.encrypted_signed_ballot}'
