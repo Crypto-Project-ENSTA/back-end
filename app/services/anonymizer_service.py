@@ -4,7 +4,7 @@ from app.services.commissioner_service import CommissionerService
 from app.repositories.votes_repository import submit_encrypted_vote
 class AnonymizerService:
     def __init__(self, db:Session,commissioner_service: CommissionerService):
-        self.db
+        self.db = db
         self.commissioner_service = commissioner_service
         
         
