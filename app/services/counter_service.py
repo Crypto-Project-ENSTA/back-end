@@ -1,12 +1,15 @@
+from sqlalchemy.orm import Session
+
 from app.models.votes import Vote
 from app.services.administrator_service import AdministratorService
 from app.services.commissioner_service import CommissionerService
 from app.repositories.counted_votes_repository import save_counted_vote
 from app.models.counted_votes import CountedVoteStatus
 class CounterSerivce:
-    def __init__(self,administrator_service : AdministratorService = None,commissioner_service: CommissionerService= None):
+    def __init__(self,db: Session = None,administrator_service : AdministratorService = None,commissioner_service: CommissionerService= None):
         self.administrator_service = administrator_service
         self.commissioner_service = commissioner_service
+        self.db=db
     E = 65537
     N = 16790472354984960479090707660307983583745720096028900802657143315132855275087953358270654491644788077299207274681476412264395128440733567555676086977285682314016015753281334610688880002015512795100325174408920174908383115788076586545667677157078623303634548008429454467640797753945582051000437312512760701002384787545247587317653999473747541198854674490490213852483487477250829230142435892550191641519150211692377947144620327589348449609852721465449027949032724255153694805094209541038733374721333117074803950357458076873646278195946213692947195837284147639943262964772088807981380259482500880212335038885647343488947
     _D = 6721620347366913699580752951399060947299276934241943351976941453161200405834987019662006061351490913469063308643105652565248189416224207369741029005539880696255919393672110332270831068448036890493189057719951015592662761887422026101471492102066233745733799251554925727650395499832404453820703928026684006767044063143620236591272022041247244702001468014883621299869017323247775340906722235744566659919892175742329512951513830851162562127523030191971453129178202227752711406856406171663888275936016190551350218597844762780759101876030196646834908455825776291315206910333920061879395890532755685258099965568987598332801
@@ -14,7 +17,7 @@ class CounterSerivce:
     PUBLIC_KEY  = (E, N)
     _PRIVATE_KEY = (_D, N)
     
-    def decrypt_all_votes(counter_prv_key: tuple[int, int], encrypted_votes_list: list[Vote]) -> list[int]:
+    def decrypt_all_votes(self,counter_prv_key: tuple[int, int], encrypted_votes_list: list[Vote]) -> list[int]:
         """
         Phase 1: Decrypt all ballots using counter's RSA private key.
         RSA decryption: m = c^d mod N
@@ -75,18 +78,18 @@ class CounterSerivce:
             # Check 1: Verify admin signature
             is_valid, vote, n2 = self.verify_signature(decrypted)
             if not is_valid:
-                save_counted_vote(db=self.db, hash_n2="unknown", vote="unknown", status=CountedVoteStatus.INVALID_SIGNATURE)
+                save_counted_vote(db=self.db, n2="unknown", vote="unknown", status=CountedVoteStatus.INVALID_SIGNATURE)
                 results["invalid_signature"] += 1
                 continue
 
             # Check 2: Verify N2 fingerprint
             if not self.is_n2_hash_exist(n2):
-                save_counted_vote(db=self.db, hash_n2=n2, vote=vote, status=CountedVoteStatus.INVALID_N2)
+                save_counted_vote(db=self.db, n2=n2, vote=vote, status=CountedVoteStatus.INVALID_N2)
                 results["invalid_n2"] += 1
                 continue
 
             # Valid vote - add to tally
-            save_counted_vote(db=self.db, hash_n2=n2, vote=vote, status=CountedVoteStatus.VALID)
+            save_counted_vote(db=self.db, n2=n2, vote=vote, status=CountedVoteStatus.VALID)
             results["valid"] += 1
             results["tally"][vote] = results["tally"].get(vote, 0) + 1
             # Tally = the count of votes per candidate.

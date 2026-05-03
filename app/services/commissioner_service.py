@@ -11,4 +11,4 @@ class CommissionerService:
     
     def is_n2_hash_exist(self, n2: str) -> bool:
         n2_hash = hash_n2(n2)
-        return credentials_repository.is_n2_hash_exist(n2_hash)
+        return credentials_repository.is_n2_hash_exist(db=self.db,n2_hash=n2_hash)
