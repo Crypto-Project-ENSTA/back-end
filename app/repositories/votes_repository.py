@@ -14,7 +14,7 @@ def submit_encrypted_vote(db: Session, encrypted_vote: int) -> Vote:
 
     """
     new_vote = Vote(
-        encrypted_vote=encrypted_vote,
+    encrypted_vote=str(encrypted_vote),
         status=VoteStatus.VALID
     )
     

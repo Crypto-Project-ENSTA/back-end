@@ -14,7 +14,7 @@ class Vote(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    encrypted_vote = Column(Integer, nullable=False)
+    encrypted_vote = Column(String, nullable=False)
 
     submitted_at = Column(DateTime, default=datetime.utcnow)
 
