@@ -50,5 +50,52 @@ class CounterSerivce:
             return False, "", ""
         
     
-    def is_n2_hash_exist(self,n2: str):
+    def is_n2_hash_exist(self,n2: str)->bool:
         return self.commissioner_service.is_n2_hash_exist(n2=n2)
+    
+    
+    def process_all_votes(self, encrypted_votes_list: list[Vote]) -> dict:
+        """
+        Full counting protocol:
+        Phase 1: Decrypt all ballots with counter's private key
+        Phase 2: For each decrypted ballot:
+            - Check 1: Verify administrator's signature
+            - Check 2: Verify N2 fingerprint with commissioner
+        """
+        results = {"valid": 0, "invalid_signature": 0, "invalid_n2": 0, "tally": {}}
+
+        # Phase 1: Decrypt all votes
+        decrypted_ballots = self.decrypt_all_votes(self._PRIVATE_KEY, encrypted_votes_list)
+
+        # Phase 2: Verify each decrypted ballot
+        for decrypted in decrypted_ballots:
+
+            # Check 1: Verify admin signature
+            is_valid, vote, n2 = self.verify_signature(decrypted)
+            if not is_valid:
+                results["invalid_signature"] += 1
+                continue
+
+            # Check 2: Verify N2 fingerprint
+            if not self.is_n2_hash_exist(n2):
+                results["invalid_n2"] += 1
+                continue
+
+            # Valid vote — add to tally
+            results["valid"] += 1
+            results["tally"][vote] = results["tally"].get(vote, 0) + 1
+            # Tally = the count of votes per candidate.
+
+            # For example if 3 people voted "A" and 2 voted "B":
+
+            # {
+            # "valid": 5,
+            # "invalid_signature": 0,
+            # "invalid_n2": 0,
+            # "tally": {
+            # "A": 3,
+            # "B": 2
+            # }
+            # }
+
+        return results
