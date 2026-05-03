@@ -27,9 +27,17 @@ def get_anonymizer_service(db :Session =Depends(get_db),commissioner: Commission
     return AnonymizerService(db=db,commissioner_service=commissioner)
 
 
-def get_counter_service() -> CounterSerivce:
-    return CounterSerivce()
-
+def get_counter_service(
+    administrator_service: AdministratorService = Depends(get_administrator_service),
+    commissioner_service: CommissionerService = Depends(get_commissioner_service),
+    db: Session = Depends(get_db)
+) -> CounterSerivce:
+    return CounterSerivce(
+        administrator_service=administrator_service,
+        commissioner_service=commissioner_service,
+        db=db
+    )
+    
 def get_voting_system_service(
     administrator_service: AdministratorService = Depends(get_administrator_service),
     anonymizer_service: AnonymizerService = Depends(get_anonymizer_service),
