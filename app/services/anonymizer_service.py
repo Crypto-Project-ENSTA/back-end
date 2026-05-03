@@ -13,3 +13,9 @@ class AnonymizerService:
     
     def submit_encrypted_ballot(self,encrypted_vote:int):
         return submit_encrypted_vote(db=self.db,encrypted_vote=encrypted_vote)
+    
+    def anonymize_and_submit_vote(self, voter_n1: str, encrypted_vote: int) -> bool:
+        if not self.check_n1(voter_n1=voter_n1, removeN1=True):
+            return False
+        self.submit_encrypted_ballot(encrypted_vote=encrypted_vote)
+        return True
