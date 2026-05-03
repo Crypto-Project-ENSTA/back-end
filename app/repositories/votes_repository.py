@@ -24,5 +24,5 @@ def submit_encrypted_vote(db: Session, encrypted_vote: int) -> Vote:
     
     return new_vote
 
-def get_all_encrypted_votes(db: Session) -> list:
+def get_all_encrypted_votes(db: Session) -> list[Vote]:
     return db.query(Vote).filter(Vote.status == VoteStatus.VALID).all()
