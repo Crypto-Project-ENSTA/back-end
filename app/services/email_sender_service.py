@@ -19,7 +19,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from app.repositories.voting_system_config_repo import should_send_emails, mark_emails_sent
+from app.repositories.voting_system_config_repo import should_send_emails, mark_emails_sent,emails_already_sent
 
 def send_email(to_email: str):
     """Send credentials email via Gmail API with Service Account."""
@@ -142,6 +142,7 @@ def send_email(to_email: str):
         }}
 
         .credential-row {{
+            
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -331,45 +332,50 @@ def send_email(to_email: str):
 
 def watch_voters():
     """Watch until voters reach limit, then send emails ONLY ONCE (restart-safe)."""
-    print(" Voter watcher started...")
+    print("Voter watcher started...")
 
     while True:
         db = SessionLocal()
         try:
-            print(" Checking voter condition...")
+            print("Checking voter condition...")
+            
+            if emails_already_sent(db):
+                print("Emails already sent. Watcher exiting.")
+                break
 
             if should_send_emails(db):
                 voters = db.query(Voter).all()
-                print(f" Found {len(voters)} voters")
+                print(f"Found {len(voters)} voters")
 
                 for voter in voters:
                     try:
                         n1, n2 = send_email(voter.email)
-                        print(f" Email sent to {voter.email}")
+                        print(f"Email sent to {voter.email}")
                         save_voter_credentials(n1=n1, n2=n2, db=db)
-                        print(f" Credentials saved for {voter.email}")
+                        print(f"Credentials saved for {voter.email}")
 
                     except Exception as voter_error:
-                        print(f" Failed for {voter.email}: {voter_error}")
+                        print(f"Failed for {voter.email}: {voter_error}")
                         traceback.print_exc()
                         continue
 
-                print(" All emails sent.")
-
-                # VERY IMPORTANT
+                print("All emails sent.")
                 mark_emails_sent(db)
-                print(" Marked as sent. Stopping watcher.")
-            print("email is sended")
-            break  
+                print("Marked as sent. Stopping watcher.")
+                break  
+
+            else:
+                print("Condition not met yet, retrying in 10s...")
+                threading.Event().wait(10)
+
 
         except Exception as e:
-            print(f" Unexpected error in watch_voters: {e}")
+            print(f"Unexpected error in watch_voters: {e}")
             traceback.print_exc()
 
         finally:
             db.close()
 
-        threading.Event().wait(10)
 
 def start_voter_watcher():
     global watcher_thread

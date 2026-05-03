@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     ENV: str
     ALLOWED_ORIGINS: str  
     DATABASE_URL: str
+    SECRET_KEY:str
     EMAIL_FROM: str
     GMAIL_TOKEN: str
     GMAIL_REFRESH_TOKEN: str

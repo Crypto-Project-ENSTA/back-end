@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from app.routers import voting_system_config_router , voters_router
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 
 # Import all ORM models so that SQLAlchemy knows about them
@@ -48,6 +49,8 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(voting_system_config_router.router)
 app.include_router(voters_router.router)
+
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)  
 
 # Allow the frontend to communicate with this API from a different domain.
 # Without this, the browser blocks all cross-origin requests by default.
