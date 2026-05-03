@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.services.commissioner_service import CommissionerService
-from app.repositories.votes_repository import submit_encrypted_vote
+from app.repositories.votes_repository import submit_encrypted_vote,get_all_encrypted_votes
 class AnonymizerService:
     def __init__(self, db:Session,commissioner_service: CommissionerService):
         self.db = db
@@ -19,3 +19,6 @@ class AnonymizerService:
             return False
         self.submit_encrypted_ballot(encrypted_vote=encrypted_vote)
         return True
+    
+    def get_all_encrypted_votes(self):
+        return get_all_encrypted_votes(db=self.db)
