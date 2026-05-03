@@ -2,7 +2,7 @@ from app.models.votes import Vote
 from app.services.administrator_service import AdministratorService
 
 class CounterSerivce:
-    def __init__(self,administrator_service : AdministratorService):
+    def __init__(self,administrator_service : AdministratorService = None):
         self.administrator_service = administrator_service
     E = 65537
     N = 16790472354984960479090707660307983583745720096028900802657143315132855275087953358270654491644788077299207274681476412264395128440733567555676086977285682314016015753281334610688880002015512795100325174408920174908383115788076586545667677157078623303634548008429454467640797753945582051000437312512760701002384787545247587317653999473747541198854674490490213852483487477250829230142435892550191641519150211692377947144620327589348449609852721465449027949032724255153694805094209541038733374721333117074803950357458076873646278195946213692947195837284147639943262964772088807981380259482500880212335038885647343488947
@@ -26,3 +26,23 @@ class CounterSerivce:
         
         return decrypted_ballots        
         
+    def verify_signature(self, decrypted: int) -> tuple[bool, str, str]:
+        """
+        Check 1: Verify admin signature and extract ballot content.
+        RSA verification: m = s^e mod N
+        Returns (is_valid, vote, n2)
+        """
+        try:
+            e, N = self.administrator_service.PUBLIC_KEY
+            recovered_m = pow(decrypted, e, N)
+            byte_length = (recovered_m.bit_length() + 7) // 8
+            recovered_str = recovered_m.to_bytes(byte_length, byteorder='big').decode('utf-8')
+            recovered_str = recovered_str.strip("()")
+            parts = recovered_str.split(",")
+            if len(parts) != 3:
+                return False, "", ""
+            vote, n2, _ = parts
+            return True, vote, n2
+        except Exception as e:
+            print(f"Signature verification failed: {e}")
+            return False, "", ""
