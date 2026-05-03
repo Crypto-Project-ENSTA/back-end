@@ -61,6 +61,8 @@ class CounterSerivce:
         Phase 2: For each decrypted ballot:
             - Check 1: Verify administrator's signature
             - Check 2: Verify N2 fingerprint with commissioner
+            - Save result to counted_votes table
+
         """
         results = {"valid": 0, "invalid_signature": 0, "invalid_n2": 0, "tally": {}}
 
@@ -81,7 +83,7 @@ class CounterSerivce:
                 results["invalid_n2"] += 1
                 continue
 
-            # Valid vote — add to tally
+            # Valid vote - add to tally
             results["valid"] += 1
             results["tally"][vote] = results["tally"].get(vote, 0) + 1
             # Tally = the count of votes per candidate.
