@@ -1,7 +1,8 @@
 from app.models.votes import Vote
 from app.services.administrator_service import AdministratorService
 from app.services.commissioner_service import CommissionerService
-
+from app.repositories.counted_votes_repository import save_counted_vote
+from app.models.counted_votes import CountedVoteStatus
 class CounterSerivce:
     def __init__(self,administrator_service : AdministratorService = None,commissioner_service: CommissionerService= None):
         self.administrator_service = administrator_service
@@ -62,7 +63,6 @@ class CounterSerivce:
             - Check 1: Verify administrator's signature
             - Check 2: Verify N2 fingerprint with commissioner
             - Save result to counted_votes table
-
         """
         results = {"valid": 0, "invalid_signature": 0, "invalid_n2": 0, "tally": {}}
 
@@ -75,15 +75,18 @@ class CounterSerivce:
             # Check 1: Verify admin signature
             is_valid, vote, n2 = self.verify_signature(decrypted)
             if not is_valid:
+                save_counted_vote(db=self.db, hash_n2="unknown", vote="unknown", status=CountedVoteStatus.INVALID_SIGNATURE)
                 results["invalid_signature"] += 1
                 continue
 
             # Check 2: Verify N2 fingerprint
             if not self.is_n2_hash_exist(n2):
+                save_counted_vote(db=self.db, hash_n2=n2, vote=vote, status=CountedVoteStatus.INVALID_N2)
                 results["invalid_n2"] += 1
                 continue
 
             # Valid vote - add to tally
+            save_counted_vote(db=self.db, hash_n2=n2, vote=vote, status=CountedVoteStatus.VALID)
             results["valid"] += 1
             results["tally"][vote] = results["tally"].get(vote, 0) + 1
             # Tally = the count of votes per candidate.
