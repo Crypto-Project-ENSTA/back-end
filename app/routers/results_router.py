@@ -43,7 +43,7 @@ def get_election_results(
             detail=f"Error retrieving results: {str(e)}"
         )
 
-@router.post("/vote")
+@router.post("/verify-vote")
 def verify_my_vote(
     request: VerifyVoteRequest,
     counter_service: CounterService = Depends(get_counter_service)
