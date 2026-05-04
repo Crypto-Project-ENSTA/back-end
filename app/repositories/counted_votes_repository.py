@@ -22,3 +22,8 @@ def get_tally(db: Session) -> dict:
     #   "B": 2
     # }
     return tally
+
+# Fetch a single counted vote by n2 (used by voter to verify their vote was counted).
+def get_counted_vote_by_hash_n2(db: Session, n2: str) -> CountedVote | None:
+    hash_n2 = hash_n2(n2)
+    return db.query(CountedVote).filter(CountedVote.hash_n2 == hash_n2).first()
