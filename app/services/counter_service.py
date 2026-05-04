@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from app.models.votes import Vote
 from app.services.administrator_service import AdministratorService
 from app.services.commissioner_service import CommissionerService
-from app.repositories.counted_votes_repository import save_counted_vote
+from app.repositories.counted_votes_repository import save_counted_vote, get_tally,get_counted_vote_by_hash_n2
 from app.models.counted_votes import CountedVoteStatus
-class CounterSerivce:
+from app.models.counted_votes import CountedVote
+class CounterService:
     def __init__(self,db: Session = None,administrator_service : AdministratorService = None,commissioner_service: CommissionerService= None):
         self.administrator_service = administrator_service
         self.commissioner_service = commissioner_service
@@ -107,3 +108,9 @@ class CounterSerivce:
             # }
 
         return results
+    
+    def get_results(self):
+        return get_tally(db=self.db)
+    
+    def verify_vote_by_n2(self, n2: str) -> CountedVote | None:
+        return get_counted_vote_by_hash_n2(db=self.db, n2=n2)

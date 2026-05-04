@@ -1,7 +1,7 @@
 
 from app.services.administrator_service import AdministratorService
 from app.services.anonymizer_service import AnonymizerService
-from app.services.counter_service import CounterSerivce
+from app.services.counter_service import CounterService
 from app.dataclass.voter_ballot import SignedBallotDTO,EncryptedSignedBallotDTO
 from app.utils.crypto import (
     create_ballot,
@@ -10,7 +10,7 @@ from app.utils.crypto import (
     encrypt_signed_ballot
 )
 class VotingSystemService:
-    def __init__(self,administrator_service: AdministratorService,anonymizer_service :AnonymizerService,counter_service :CounterSerivce ):
+    def __init__(self,administrator_service: AdministratorService,anonymizer_service :AnonymizerService,counter_service :CounterService ):
         self.administrator_service = administrator_service
         self.anonymizer_service = anonymizer_service
         self.counter_service = counter_service
