@@ -5,7 +5,7 @@ from app.services.administrator_service import AdministratorService
 from app.services.commissioner_service import CommissionerService
 from app.repositories.counted_votes_repository import save_counted_vote, get_tally
 from app.models.counted_votes import CountedVoteStatus
-class CounterSerivce:
+class CounterService:
     def __init__(self,db: Session = None,administrator_service : AdministratorService = None,commissioner_service: CommissionerService= None):
         self.administrator_service = administrator_service
         self.commissioner_service = commissioner_service

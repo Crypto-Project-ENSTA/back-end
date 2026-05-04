@@ -9,7 +9,7 @@ from app.schemas.voter import Voter
 from app.repositories import voter_repository
 from app.services.administrator_service import AdministratorService
 from app.services.anonymizer_service import AnonymizerService
-from app.services.counter_service import CounterSerivce
+from app.services.counter_service import CounterService
 from app.services.voting_system_service import VotingSystemService
 
 router = APIRouter(prefix="/voters",)
@@ -92,7 +92,7 @@ def submit_vote(request: Request,vote_submission: VoteSubmission,voting_service:
         
 @router.post('/end-vote')
 def end_vote(
-    counter_service: CounterSerivce = Depends(get_counter_service),
+    counter_service: CounterService = Depends(get_counter_service),
     anonymizer_service: AnonymizerService = Depends(get_anonymizer_service)
 ):
     try:
