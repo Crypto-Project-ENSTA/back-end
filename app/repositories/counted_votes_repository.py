@@ -11,3 +11,14 @@ def save_counted_vote(db: Session, n2: str, vote: str, status: CountedVoteStatus
     db.commit()
     db.refresh(counted_vote)
     return counted_vote
+
+def get_tally(db: Session) -> dict:
+    votes = db.query(CountedVote).filter(CountedVote.status == CountedVoteStatus.VALID).all()
+    tally = {}
+    for v in votes:
+        tally[v.vote] = tally.get(v.vote, 0) + 1
+    # {
+    #   "A": 3,
+    #   "B": 2
+    # }
+    return tally
