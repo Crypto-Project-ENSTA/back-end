@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_anonymizer_service, get_counter_service
 from app.repositories.voter_repository import get_all_voters
-from app.repositories.voting_system_config_repo import emails_already_sent
+from app.repositories.voting_system_config_repo import emails_already_sent, set_voting_ended, set_voting_started
 from app.services.anonymizer_service import AnonymizerService
 from app.services.counter_service import CounterService
 from app.services.email_sender_service import send_email_to_voters
@@ -35,6 +35,8 @@ router = APIRouter(prefix="/voting")
 @router.post('/start-vote')
 def start_vote(db: Session = Depends(get_db)):
     try:
+        set_voting_started(db=db)
+
         voters = get_all_voters(db=db)
         if not voters:
             raise HTTPException(status_code=404, detail="No voters found")
@@ -56,9 +58,11 @@ def start_vote(db: Session = Depends(get_db)):
 @router.post('/end-vote')
 def end_vote(
     counter_service: CounterService = Depends(get_counter_service),
-    anonymizer_service: AnonymizerService = Depends(get_anonymizer_service)
+    anonymizer_service: AnonymizerService = Depends(get_anonymizer_service),
+    db : Session= Depends(get_db)
 ):
     try:
+        set_voting_ended(db=db)
         encrypted_votes = anonymizer_service.get_all_encrypted_votes()
         results = counter_service.process_all_votes(encrypted_votes_list=encrypted_votes)
         return JSONResponse(

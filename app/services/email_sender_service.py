@@ -21,7 +21,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from app.repositories.voting_system_config_repo import mark_emails_sent, should_send_emails,emails_already_sent
+from app.repositories.voting_system_config_repo import mark_emails_sent, set_voting_started, should_send_emails,emails_already_sent
 
 def send_email(to_email: str):
     """Send credentials email via Gmail API with Service Account."""
@@ -377,7 +377,6 @@ def start_voter_watcher():
     
 def send_email_to_voters(db:Session,voters:Vote):
     print(f"Found {len(voters)} voters")
-
     for voter in voters:
         try:
             n1, n2 = send_email(voter.email)
