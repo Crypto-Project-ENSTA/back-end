@@ -3,8 +3,11 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_administrator_service, get_anonymizer_service, get_counter_service, get_voting_system_service
+from app.schemas.n1_check_response import N1CheckResponse
 from app.schemas.n1_request import N1Request
+from app.schemas.register_response import RegisterResponse
 from app.schemas.vote_submission import VoteSubmission
+from app.schemas.vote_submission_response import SubmitVoteResponse
 from app.schemas.voter import Voter
 from app.repositories import voter_repository
 from app.services.administrator_service import AdministratorService
@@ -14,7 +17,23 @@ from app.services.voting_system_service import VotingSystemService
 
 router = APIRouter(prefix="/voters",)
 
-@router.post('/register')
+@router.post('/register',response_model=RegisterResponse,
+    status_code=201,
+    summary="Register a new voter",
+    description="""
+    Registers a voter by their email address.
+
+    - Returns **201** on success.
+    - Returns **409** if the email is already registered — the response body
+    still follows the standard `RegisterResponse` shape with `status: "error"`.
+    - Returns **400** for any other failure (e.g. malformed payload, DB error).
+    """,
+        responses={
+            201: {"description": "Voter registered successfully"},
+            409: {"description": "Email already exists in the system"},
+            400: {"description": "Registration failed due to invalid input or unexpected error"}
+        }
+)
 def voter_register(voter : Voter, db:Session = Depends(get_db) ):
     try:
         if voter_repository.check_email_existe(db=db, voter=voter):
@@ -36,7 +55,24 @@ def voter_register(voter : Voter, db:Session = Depends(get_db) ):
         raise HTTPException(status_code=400,detail=f"Error registering voter: {str(e)}")
     
     
-@router.post('/check_n1')
+@router.post('/check_n1',
+    response_model=N1CheckResponse,
+    summary="Validate a voter's N1 code",
+    description="""
+Verifies that the supplied **N1 code** is recognised by the commissioner.
+
+If valid, the code is stored server-side in the caller's **session** so it
+can be retrieved transparently during the subsequent `/submit_vote` call —
+the voter does **not** need to resend it.
+
+> This step must be completed before calling `/submit_vote`,
+> otherwise that endpoint will return **403**.
+""",
+    responses={
+        200: {"description": "Check completed — inspect `is_N1_exist` in the response"},
+        500: {"description": "Unexpected error communicating with the commissioner service"}
+    }
+)
 def check_n1(request : Request,voter_n1 : N1Request,service: AdministratorService = Depends(get_administrator_service)):
     try:
         result = service.request_commissioner_n1_exist(voter_n1.n1)
@@ -51,7 +87,34 @@ def check_n1(request : Request,voter_n1 : N1Request,service: AdministratorServic
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.post('/submit_vote')
+@router.post('/submit_vote',
+    response_model=SubmitVoteResponse,
+    summary="Submit an encrypted ballot",
+    description="""
+Submits the voter's encrypted ballot to the anonymizer pipeline.
+
+**Prerequisites:**
+- `/check_n1` must have been called first in the same session. The N1 code
+  is read from the session automatically and cleared once the vote is
+  accepted, preventing double voting.
+
+**Payload fields:**
+- `n2` — the voter's unique second-factor fingerprint.
+- `vote` — the encrypted vote choice.
+
+**Error cases:**
+| Code | Reason |
+|------|--------|
+| 403  | N1 not present in session (step skipped or session expired) |
+| 400  | Malformed `n2`, unrecognised vote value, or other validation failure |
+| 500  | Unexpected server-side error during ballot processing |
+""",
+    responses={
+        200: {"description": "Ballot accepted and forwarded to the anonymizer"},
+        403: {"description": "N1 not verified — call `/check_n1` first"},
+        400: {"description": "Invalid `n2` format or unrecognised vote choice"},
+        500: {"description": "Unexpected error during vote submission"}
+    })
 def submit_vote(request: Request,vote_submission: VoteSubmission,voting_service: VotingSystemService = Depends(get_voting_system_service)
 ):
     try:
