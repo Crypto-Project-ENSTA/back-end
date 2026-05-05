@@ -12,6 +12,10 @@ def create_voter(db :Session , voter =VoterSchema ):
     db.refresh(db_voter)
     return db_voter
 
+def get_all_voters(db:Session):
+    voters = db.query(VoterModel).all()
+    return voters
+
 def check_email_existe(db:Session,voter = VoterSchema):
     db_voter = db.query(VoterModel).filter(VoterModel.email ==voter.email).first()
     if db_voter is None :
