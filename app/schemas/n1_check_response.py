@@ -13,9 +13,8 @@ class N1CheckResponse(BaseModel):
 
     model_config = {
         "json_schema_extra": {
-            "examples": [
-                {"value": {"is_N1_exist": True}},
-                {"value": {"is_N1_exist": False}}
-            ]
+            "example": {
+                "is_N1_exist": True
+            }
         }
     }

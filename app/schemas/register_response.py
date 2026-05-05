@@ -8,23 +8,10 @@ class RegisterResponse(BaseModel):
 
     model_config = {
         "json_schema_extra": {
-            "examples": {
-                "success": {
-                    "summary": "Registered successfully",
-                    "value": {
-                        "status": "success",
-                        "message": "Voter registered successfully",
-                        "voter": "alice@example.com"
-                    }
-                },
-                "duplicate": {
-                    "summary": "Email already taken",
-                    "value": {
-                        "status": "error",
-                        "message": "Email already exists",
-                        "voter": "alice@example.com"
-                    }
-                }
+            "example": {
+                "status": "success",
+                "message": "Voter registered successfully",
+                "voter": "alice@example.com"
             }
         }
     }

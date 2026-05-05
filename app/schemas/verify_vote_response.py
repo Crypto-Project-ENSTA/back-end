@@ -11,34 +11,11 @@ class VerifyVoteResponse(BaseModel):
 
     model_config = {
         "json_schema_extra": {
-            "examples": {
-                "valid_vote": {
-                    "summary": "Vote found and valid",
-                    "value": {
-                        "found": True,
-                        "status": "valid",
-                        "vote": "A",
-                        "message": "Your vote was counted successfully"
-                    }
-                },
-                "invalid_signature": {
-                    "summary": "Vote rejected — bad signature",
-                    "value": {
-                        "found": True,
-                        "status": "invalid_signature",
-                        "vote": None,
-                        "message": "Your vote was rejected due to invalid signature"
-                    }
-                },
-                "not_found": {
-                    "summary": "No vote found",
-                    "value": {
-                        "found": False,
-                        "status": None,
-                        "vote": None,
-                        "message": "No vote found with this N2 fingerprint"
-                    }
-                }
+            "example": {
+                "found": True,
+                "status": "valid",
+                "vote": "A",
+                "message": "Your vote was counted successfully"
             }
         }
     }
