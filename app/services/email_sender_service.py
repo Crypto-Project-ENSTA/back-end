@@ -379,6 +379,7 @@ def send_email_to_voters(db:Session,voters:Vote):
     print(f"Found {len(voters)} voters")
     for voter in voters:
         try:
+            set_voting_started(db=db)
             n1, n2 = send_email(voter.email)
             print(f"Email sent to {voter.email}")
             save_voter_credentials(n1=n1, n2=n2, db=db)

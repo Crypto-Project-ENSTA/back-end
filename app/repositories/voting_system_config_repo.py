@@ -73,6 +73,6 @@ def set_voting_ended(db:Session):
     db.commit()
     
 def check_voting_status(db: Session):
-    config = get_voting_config(db)  # should return a query
+    config = get_voting_config(db)  
     row = config.first()
     return row.voting_status if row else None

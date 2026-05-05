@@ -35,8 +35,6 @@ router = APIRouter(prefix="/voting")
 @router.post('/start-vote')
 def start_vote(db: Session = Depends(get_db)):
     try:
-        set_voting_started(db=db)
-
         voters = get_all_voters(db=db)
         if not voters:
             raise HTTPException(status_code=404, detail="No voters found")
