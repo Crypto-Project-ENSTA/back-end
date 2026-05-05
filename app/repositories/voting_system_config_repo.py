@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.models.voting_system_config_model import VotingConfigModel
+from app.models.voting_system_config_model import VotingConfigModel, VotingStatus
 
 
 def get_voting_config(db: Session) -> VotingConfigModel:
@@ -61,3 +61,13 @@ def mark_emails_sent(db: Session):
 def emails_already_sent(db: Session) -> bool:
     config = get_voting_config(db)
     return config.emails_sent
+
+def set_voting_started(db:Session):
+    config = get_voting_config(db)
+    config.voting_status = VotingStatus.VOTE_STARTED
+    db.commit()
+    
+def set_voting_ended(db:Session):
+    config = get_voting_config(db)
+    config.voting_status = VotingStatus.VOTE_ENDED
+    db.commit()
