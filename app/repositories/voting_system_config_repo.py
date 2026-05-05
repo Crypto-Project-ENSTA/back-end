@@ -50,13 +50,13 @@ def mark_emails_sent(db: Session):
     db.commit()
 
 
-def reset_emails_flag(db: Session):
-    """
-    Reset flag (useful for testing or new election).
-    """
-    config = get_voting_config(db)
-    config.emails_sent = False
-    db.commit()
+# def reset_emails_flag(db: Session):
+#     """
+#     Reset flag (useful for testing or new election).
+#     """
+#     config = get_voting_config(db)
+#     config.emails_sent = False
+#     db.commit()
 
 def emails_already_sent(db: Session) -> bool:
     config = get_voting_config(db)
