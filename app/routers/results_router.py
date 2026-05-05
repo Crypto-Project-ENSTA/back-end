@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.tally_response import TallyResponse
 from app.schemas.verify_vote_request import VerifyVoteRequest
+from app.schemas.verify_vote_response import VerifyVoteResponse
 from app.services.counter_service import CounterService
 from app.dependencies import get_counter_service
 
@@ -64,7 +65,24 @@ def get_election_results(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving results: {str(e)}")
 
-@router.post("/verify-vote")
+@router.post("/verify-vote",
+    response_model=VerifyVoteResponse,
+    summary="Verify a vote by N2 fingerprint",
+    description="""
+Allows a voter to confirm whether their vote was received and counted correctly.
+
+The voter submits their **N2 fingerprint** and receives back:
+- Whether a matching vote was found in the system
+- The vote's current status (`valid`, `invalid_signature`, `invalid_n2`)
+- The recorded vote choice (only disclosed when the vote is `valid`)
+
+This endpoint does **not** mutate any state — it is read-only.
+""",
+    responses={
+        200: {"description": "Lookup completed — check `found` and `status` fields in the response"},
+        500: {"description": "Internal server error while verifying the vote"}
+    }
+)
 def verify_my_vote(
     request: VerifyVoteRequest,
     counter_service: CounterService = Depends(get_counter_service)
@@ -83,6 +101,8 @@ def verify_my_vote(
         if not counted_vote:
             return {
                 "found": False,
+                "status": None,
+                "vote": None,
                 "message": "No vote found with this N2 fingerprint"
             }
         
