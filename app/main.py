@@ -51,7 +51,13 @@ app.include_router(voting_system_config_router.router)
 app.include_router(voters_router.router)
 app.include_router(results_router.router)
 
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)  
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    same_site="none",   # allow the cookie cross-origin
+    https_only=True,    # browser requires this when same_site="none"
+    max_age=600,        # session expires after 10 minutes
+)
 
 # Allow the frontend to communicate with this API from a different domain.
 # Without this, the browser blocks all cross-origin requests by default.
