@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_administrator_service, get_anonymizer_service, get_counter_service, get_voting_system_service
+from app.schemas.n1_check_response import N1CheckResponse
 from app.schemas.n1_request import N1Request
 from app.schemas.vote_submission import VoteSubmission
 from app.schemas.voter import Voter
@@ -36,7 +37,24 @@ def voter_register(voter : Voter, db:Session = Depends(get_db) ):
         raise HTTPException(status_code=400,detail=f"Error registering voter: {str(e)}")
     
     
-@router.post('/check_n1')
+@router.post('/check_n1',
+    response_model=N1CheckResponse,
+    summary="Validate a voter's N1 code",
+    description="""
+Verifies that the supplied **N1 code** is recognised by the commissioner.
+
+If valid, the code is stored server-side in the caller's **session** so it
+can be retrieved transparently during the subsequent `/submit_vote` call —
+the voter does **not** need to resend it.
+
+> This step must be completed before calling `/submit_vote`,
+> otherwise that endpoint will return **403**.
+""",
+    responses={
+        200: {"description": "Check completed — inspect `is_N1_exist` in the response"},
+        500: {"description": "Unexpected error communicating with the commissioner service"}
+    }
+)
 def check_n1(request : Request,voter_n1 : N1Request,service: AdministratorService = Depends(get_administrator_service)):
     try:
         result = service.request_commissioner_n1_exist(voter_n1.n1)
