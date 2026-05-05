@@ -1,5 +1,7 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.models.votes import Vote, VoteStatus
+from app.models.voting_system_config_model import VotingConfigModel
 
 def submit_encrypted_vote(db: Session, encrypted_vote: int) -> Vote:
     """
@@ -26,3 +28,17 @@ def submit_encrypted_vote(db: Session, encrypted_vote: int) -> Vote:
 
 def get_all_encrypted_votes(db: Session) -> list[Vote]:
     return db.query(Vote).filter(Vote.status == VoteStatus.VALID).all()
+
+def has_reached_vote_limit(self) -> bool:
+    # count only valid votes
+    total_votes = (
+        self.db.query(func.count(Vote.id))
+        .filter(Vote.status == VoteStatus.VALID)
+        .scalar()
+    )
+
+    # get total expected voters
+    config = self.db.query(VotingConfigModel).first()
+    total_voters = config.num_voters
+
+    return total_votes >= total_voters
