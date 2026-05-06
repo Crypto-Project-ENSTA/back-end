@@ -11,8 +11,6 @@ from app.schemas.vote_submission_response import SubmitVoteResponse
 from app.schemas.voter import Voter
 from app.repositories import voter_repository
 from app.services.administrator_service import AdministratorService
-from app.services.anonymizer_service import AnonymizerService
-from app.services.counter_service import CounterService
 from app.services.voting_system_service import VotingSystemService
 
 router = APIRouter(prefix="/voters",)
@@ -151,23 +149,3 @@ def submit_vote(request: Request,vote_submission: VoteSubmission,voting_service:
             status_code=500,
             detail=f"Error submitting vote: {str(e)}"
         )
-        
-        
-@router.post('/end-vote')
-def end_vote(
-    counter_service: CounterService = Depends(get_counter_service),
-    anonymizer_service: AnonymizerService = Depends(get_anonymizer_service)
-):
-    try:
-        encrypted_votes = anonymizer_service.get_all_encrypted_votes()
-        results = counter_service.process_all_votes(encrypted_votes_list=encrypted_votes)
-        return JSONResponse(
-            status_code=200,
-            content={
-                "status": "success",
-                "message": "Votes counted successfully",
-                "results": results
-            }
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error counting votes: {str(e)}")

@@ -6,8 +6,11 @@ from app.services.commissioner_service import CommissionerService
 from app.repositories.counted_votes_repository import save_counted_vote, get_tally,get_counted_vote_by_hash_n2
 from app.models.counted_votes import CountedVoteStatus
 from app.models.counted_votes import CountedVote
+from app.models.voting_system_config_model import VotingStatus
+from app.repositories.voting_system_config_repo import get_voting_config, set_voting_ended
+
 class CounterService:
-    def __init__(self,db: Session = None,administrator_service : AdministratorService = None,commissioner_service: CommissionerService= None):
+    def __init__(self,db: Session = None,administrator_service : AdministratorService = None,commissioner_service: CommissionerService= None,):
         self.administrator_service = administrator_service
         self.commissioner_service = commissioner_service
         self.db=db
@@ -114,3 +117,16 @@ class CounterService:
     
     def verify_vote_by_n2(self, n2: str) -> CountedVote | None:
         return get_counted_vote_by_hash_n2(db=self.db, n2=n2)
+    
+    def finalize_voting(self,encrypted_votes:list[Vote]) -> dict:
+
+        config = get_voting_config(self.db)
+
+        if config.voting_status == VotingStatus.VOTE_ENDED:
+            return {"message": "Voting already finalized"}
+
+        set_voting_ended(db=self.db)
+
+        results = self.process_all_votes(encrypted_votes_list=encrypted_votes)
+
+        return results

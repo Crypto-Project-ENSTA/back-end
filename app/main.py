@@ -1,6 +1,6 @@
 # TODO: Keep minimal setup for now; extend when implementing routers
 from fastapi import FastAPI
-from app.routers import results_router, voting_system_config_router , voters_router
+from app.routers import results_router, voting_system_config_router , voters_router,voting_router
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
@@ -50,6 +50,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(voting_system_config_router.router)
 app.include_router(voters_router.router)
 app.include_router(results_router.router)
+app.include_router(voting_router.router)
 
 app.add_middleware(
     SessionMiddleware,
