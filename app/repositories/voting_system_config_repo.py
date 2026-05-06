@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.voting_system_config_model import VotingConfigModel, VotingStatus
+from app.schemas.update_voting_config import UpdateVotingConfigSchema
 
 
 def get_voting_config(db: Session) -> VotingConfigModel:
@@ -18,6 +19,20 @@ def get_voting_config(db: Session) -> VotingConfigModel:
 
     return config
 
+# repository
+def update_voting_config(db: Session, updates: UpdateVotingConfigSchema) -> VotingConfigModel:
+    """
+    Update voting config fields.
+    Only provided (non-None) fields will be updated.
+    """
+    config = get_voting_config(db)
+
+    for field, value in updates.model_dump(exclude_none=True).items():
+        setattr(config, field, value)
+
+    db.commit()
+    db.refresh(config)
+    return config
 
 def is_limit_reached(db: Session) -> bool:
     """
