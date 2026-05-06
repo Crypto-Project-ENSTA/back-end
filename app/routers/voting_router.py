@@ -81,6 +81,11 @@ def end_vote(
     description="Returns the current voting status: `register`, `vote_started`, or `vote_ended`.",)
 def vote_status(db: Session = Depends(get_db)):
     status = check_voting_status(db)
-    return VoteStatusResponse(
-        voting_status=status,
-    )
+
+    if status is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Voting configuration not found",
+        )
+
+    return VoteStatusResponse(voting_status=status)
