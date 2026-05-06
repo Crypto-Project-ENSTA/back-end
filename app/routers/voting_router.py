@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_anonymizer_service, get_counter_service
 from app.repositories.voter_repository import get_all_voters
-from app.repositories.voting_system_config_repo import emails_already_sent, set_voting_ended, set_voting_started
+from app.repositories.voting_system_config_repo import check_voting_status, emails_already_sent, set_voting_ended, set_voting_started
+from app.schemas.vote_status_reponse import VoteStatusResponse
 from app.services.anonymizer_service import AnonymizerService
 from app.services.counter_service import CounterService
 from app.services.email_sender_service import send_email_to_voters
@@ -73,3 +74,12 @@ def end_vote(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error counting votes: {str(e)}")
+    
+    
+    
+@router.get("/vote-status", response_model=VoteStatusResponse)
+def vote_status(db: Session = Depends(get_db)):
+    status = check_voting_status(db)
+    return VoteStatusResponse(
+        voting_status=status,
+    )
