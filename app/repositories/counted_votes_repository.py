@@ -14,14 +14,23 @@ def save_counted_vote(db: Session, n2: str, vote: str, status: CountedVoteStatus
 
 def get_tally(db: Session) -> dict:
     votes = db.query(CountedVote).filter(CountedVote.status == CountedVoteStatus.VALID).all()
+    total = len(votes)
     tally = {}
+
     for v in votes:
         tally[v.vote] = tally.get(v.vote, 0) + 1
+
     # {
-    #   "A": 3,
-    #   "B": 2
+    #   "A": {"count": 3, "percentage": 60.0},
+    #   "B": {"count": 2, "percentage": 40.0}
     # }
-    return tally
+    return {
+        candidate: {
+            "count": count,
+            "percentage": round((count / total) * 100, 2) if total > 0 else 0.0,
+        }
+        for candidate, count in tally.items()
+    }
 
 # Fetch a single counted vote by n2 (used by voter to verify their vote was counted).
 def get_counted_vote_by_hash_n2(db: Session, n2: str) -> CountedVote | None:

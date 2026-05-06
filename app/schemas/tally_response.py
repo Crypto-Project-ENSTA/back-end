@@ -1,15 +1,22 @@
 from pydantic import BaseModel, Field
 
 
+class CandidateTally(BaseModel):
+    count: int = Field(..., description="Number of valid votes for this candidate")
+    percentage: float = Field(..., description="Percentage of total valid votes")
+
 class TallyResponse(BaseModel):
     total_votes: int = Field(..., description="Total number of valid votes counted")
-    tally: dict[str, int] = Field(..., description="Vote count per candidate")
+    tally: dict[str, CandidateTally] = Field(..., description="Vote count and percentage per candidate")
 
     model_config = {
         "json_schema_extra": {
             "example": {
                 "total_votes": 5,
-                "tally": {"A": 3, "B": 2}
+                "tally": {
+                    "A": {"count": 3, "percentage": 60.0},
+                    "B": {"count": 2, "percentage": 40.0}
+                }
             }
         }
     }

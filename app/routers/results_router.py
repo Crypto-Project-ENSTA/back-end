@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.repositories.counted_votes_repository import get_tally
 from app.schemas.tally_response import TallyResponse
 from app.schemas.verify_vote_request import VerifyVoteRequest
 from app.schemas.verify_vote_response import VerifyVoteResponse
@@ -11,10 +12,12 @@ router = APIRouter(prefix="/results")
 
 
 
-@router.get("/tally",response_model=TallyResponse,
+@router.get(
+    "/tally",
+    response_model=TallyResponse,
     summary="Get election results tally",
     description="""
-Returns the current vote counts for all candidates, along with the total
+Returns the current vote counts and percentages for all candidates, along with the total
 number of valid votes processed so far.
 
 Only **valid** votes are included in the tally — rejected votes
@@ -28,40 +31,37 @@ Only **valid** votes are included in the tally — rejected votes
                     "examples": {
                         "with_votes": {
                             "summary": "Election in progress",
-                            "value": {"total_votes": 5, "tally": {"A": 3, "B": 2}}
+                            "value": {
+                                "total_votes": 5,
+                                "tally": {
+                                    "A": {"count": 3, "percentage": 60.0},
+                                    "B": {"count": 2, "percentage": 40.0},
+                                },
+                            },
                         },
                         "no_votes": {
                             "summary": "No votes counted yet",
-                            "value": {"message": "No valid votes counted yet", "tally": {}}
-                        }
+                            "value": {"total_votes": 0, "tally": {}},
+                        },
                     }
                 }
-            }
+            },
         },
-        500: {"description": "Internal server error while retrieving results"}
-    }
+        500: {"description": "Internal server error while retrieving results"},
+    },
 )
-def get_election_results(
-    counter_service: CounterService = Depends(get_counter_service)
-):
-
+ 
+def get_election_results(db: Session = Depends(get_db)):
     try:
-        results = counter_service.get_results()
-        
-        if not results:
-            return {
-                "message": "No valid votes counted yet",
-                "tally": {}
-            }
-        
-        # Calculate total valid votes
-        total_votes = sum(results.values())
-        
-        return {
-            "total_votes": total_votes,
-            "tally": results
-        }
-    
+        tally = get_tally(db)
+
+        if not tally:
+            return TallyResponse(total_votes=0, tally={})
+
+        total_votes = sum(v["count"] for v in tally.values())
+
+        return TallyResponse(total_votes=total_votes, tally=tally)
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving results: {str(e)}")
 
