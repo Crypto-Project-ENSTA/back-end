@@ -17,17 +17,17 @@ class AdministratorService:
     def PUBLIC_KEY(self) -> tuple[int, int]:
         pub_numbers = self._public_key.public_numbers()
         return (pub_numbers.e, pub_numbers.n)
+    @property
+    def _PRIVATE_KEY(self) -> tuple[int, int]:
+        priv_numbers = self._private_key.private_numbers()
+        return (priv_numbers.d, priv_numbers.public_numbers.n)
     
     def request_commissioner_n1_exist(self,voter_n1: str):
         return self.commissioner.is_n1_exist(voter_n1)
     
     def sign_masked_ballot(self, masked_ballot: MaskedBallotDTO):
-        priv_numbers = self._private_key.private_numbers()
-        d = priv_numbers.d
-        n = priv_numbers.public_numbers.n
-
         return sign_masked_ballot(
-            admin_N_public_key=n,
-            admin_private_key=d,
+            admin_N_public_key=self._PRIVATE_KEY[1],
+            admin_private_key=self._PRIVATE_KEY[0],
             masked_ballot=masked_ballot
         )
