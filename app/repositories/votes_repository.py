@@ -29,16 +29,16 @@ def submit_encrypted_vote(db: Session, encrypted_vote: int) -> Vote:
 def get_all_encrypted_votes(db: Session) -> list[Vote]:
     return db.query(Vote).filter(Vote.status == VoteStatus.VALID).all()
 
-def has_reached_vote_limit(self) -> bool:
+def has_reached_vote_limit(db:Session) -> bool:
     # count only valid votes
     total_votes = (
-        self.db.query(func.count(Vote.id))
+        db.query(func.count(Vote.id))
         .filter(Vote.status == VoteStatus.VALID)
         .scalar()
     )
 
     # get total expected voters
-    config = self.db.query(VotingConfigModel).first()
+    config = db.query(VotingConfigModel).first()
     total_voters = config.num_voters
 
     return total_votes >= total_voters
