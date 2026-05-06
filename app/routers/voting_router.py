@@ -1,5 +1,6 @@
 # app/routers/voting.py (or app/routers/status.py)
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi import status as http_status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -95,12 +96,12 @@ def end_vote(
     },
 )
 def vote_status(db: Session = Depends(get_db)):
-    status = check_voting_status(db)
+    voting_status = check_voting_status(db)
 
-    if status is None:
+    if voting_status is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail="Voting configuration not found",
         )
 
-    return VoteStatusResponse(voting_status=status)
+    return VoteStatusResponse(voting_status=voting_status)
