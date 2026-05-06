@@ -77,8 +77,23 @@ def end_vote(
     
     
     
-@router.get("/vote-status", response_model=VoteStatusResponse,    summary="Get voting status",
-    description="Returns the current voting status: `register`, `vote_started`, or `vote_ended`.",)
+@router.get(
+    "/vote-status",
+    response_model=VoteStatusResponse,
+    summary="Get voting status",
+    description="Returns the current voting status: `register`, `vote_started`, or `vote_ended`.",
+    responses={
+        200: {"description": "Current voting status retrieved successfully"},
+        404: {
+            "description": "Voting configuration not found",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Voting configuration not found"}
+                }
+            },
+        },
+    },
+)
 def vote_status(db: Session = Depends(get_db)):
     status = check_voting_status(db)
 
