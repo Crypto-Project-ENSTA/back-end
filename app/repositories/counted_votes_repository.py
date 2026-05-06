@@ -24,13 +24,14 @@ def get_tally(db: Session) -> dict:
     #   "A": {"count": 3, "percentage": 60.0},
     #   "B": {"count": 2, "percentage": 40.0}
     # }
-    return {
-        candidate: {
+    return [
+        {
+            "candidate": candidate,
             "count": count,
             "percentage": round((count / total) * 100, 2) if total > 0 else 0.0,
         }
         for candidate, count in tally.items()
-    }
+    ]
 
 # Fetch a single counted vote by n2 (used by voter to verify their vote was counted).
 def get_counted_vote_by_hash_n2(db: Session, n2: str) -> CountedVote | None:

@@ -33,15 +33,15 @@ Only **valid** votes are included in the tally — rejected votes
                             "summary": "Election in progress",
                             "value": {
                                 "total_votes": 5,
-                                "tally": {
-                                    "A": {"count": 3, "percentage": 60.0},
-                                    "B": {"count": 2, "percentage": 40.0},
-                                },
+                                "tally": [
+                                    {"candidate": "A", "count": 3, "percentage": 60.0},
+                                    {"candidate": "B", "count": 2, "percentage": 40.0},
+                                ],
                             },
                         },
                         "no_votes": {
                             "summary": "No votes counted yet",
-                            "value": {"total_votes": 0, "tally": {}},
+                            "value": {"total_votes": 0, "tally": []},
                         },
                     }
                 }
@@ -50,21 +50,15 @@ Only **valid** votes are included in the tally — rejected votes
         500: {"description": "Internal server error while retrieving results"},
     },
 )
- 
-def get_election_results(db: Session = Depends(get_db)):
+def get_election_results(db: Session = Depends(get_db),counter : CounterService =Depends(get_counter_service)):
     try:
-        tally = get_tally(db)
-
-        if not tally:
-            return TallyResponse(total_votes=0, tally={})
-
-        total_votes = sum(v["count"] for v in tally.values())
-
-        return TallyResponse(total_votes=total_votes, tally=tally)
-
+        tally = counter.get_results()
+        return TallyResponse(
+            total_votes=sum(c["count"] for c in tally),
+            tally=tally
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving results: {str(e)}")
-
 @router.post("/verify-vote",
     response_model=VerifyVoteResponse,
     summary="Verify a vote by N2 fingerprint",
