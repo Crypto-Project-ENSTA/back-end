@@ -71,9 +71,144 @@ The voter submits their **N2 fingerprint** and receives back:
 - The recorded vote choice (only disclosed when the vote is `valid`)
 
 This endpoint does **not** mutate any state — it is read-only.
+
+## Possible Outcomes
+
+### 1. Vote Not Found
+**Condition:** No vote exists in the system with the provided N2 fingerprint.
+
+**Response:**
+```json
+{
+    "found": false,
+    "status": null,
+    "vote": null,
+    "message": "No vote found with this N2 fingerprint"
+}
+```
+
+**Possible Reasons:**
+- The voter hasn't submitted a vote yet
+- Incorrect N2 fingerprint was provided
+- Vote was never received by the system
+
+---
+
+### 2. Vote Found - Valid
+**Condition:** Vote was received, validated successfully, and counted.
+
+**Response:**
+```json
+{
+    "found": true,
+    "status": "valid",
+    "vote": "<voter's choice>",
+    "message": "Your vote was counted successfully"
+}
+```
+
+**Details:**
+- Both the digital signature and N2 fingerprint passed validation
+- The vote is included in the final tally
+- The actual vote choice is disclosed to the voter
+
+---
+
+### 3. Vote Found - Invalid Signature
+**Condition:** Vote was received but failed digital signature verification.
+
+**Response:**
+```json
+{
+    "found": true,
+    "status": "invalid_signature",
+    "vote": null,
+    "message": "Your vote was rejected due to invalid signature"
+}
+```
+
+**Details:**
+- The digital signature could not be verified against the registered public key
+- The vote was **not** counted in the final tally
+- Vote choice is **not** disclosed (potential tampering detected)
+
+**Possible Reasons:**
+- Vote data was tampered with after signing
+- Wrong private key was used to sign the vote
+- Signature corruption during transmission
+
+---
+
+### 4. Vote Found - Invalid N2
+**Condition:** Vote was received but failed N2 fingerprint validation.
+
+**Response:**
+```json
+{
+    "found": true,
+    "status": "invalid_n2",
+    "vote": null,
+    "message": "Your vote was rejected due to invalid N2 fingerprint"
+}
+```
+
+**Details:**
+- The N2 fingerprint validation failed
+- The vote was **not** counted in the final tally
+- Vote choice is **not** disclosed (potential eligibility issue)
+
+**Possible Reasons:**
+- N2 fingerprint doesn't match the voter's registered credentials
+- Voter registration was not properly completed
+- N2 fingerprint was computed incorrectly during vote submission
+
 """,
     responses={
-        200: {"description": "Lookup completed — check `found` and `status` fields in the response"},
+        200: {
+            "description": "Lookup completed — check `found` and `status` fields in the response",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "vote_not_found": {
+                            "summary": "No vote found",
+                            "value": {
+                                "found": False,
+                                "status": None,
+                                "vote": None,
+                                "message": "No vote found with this N2 fingerprint"
+                            }
+                        },
+                        "vote_valid": {
+                            "summary": "Valid vote (counted)",
+                            "value": {
+                                "found": True,
+                                "status": "valid",
+                                "vote": "Candidate A",
+                                "message": "Your vote was counted successfully"
+                            }
+                        },
+                        "vote_invalid_signature": {
+                            "summary": "Invalid signature (not counted)",
+                            "value": {
+                                "found": True,
+                                "status": "invalid_signature",
+                                "vote": None,
+                                "message": "Your vote was rejected due to invalid signature"
+                            }
+                        },
+                        "vote_invalid_n2": {
+                            "summary": "Invalid N2 fingerprint (not counted)",
+                            "value": {
+                                "found": True,
+                                "status": "invalid_n2",
+                                "vote": None,
+                                "message": "Your vote was rejected due to invalid N2 fingerprint"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         500: {"description": "Internal server error while verifying the vote"}
     }
 )
