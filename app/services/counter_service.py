@@ -1,0 +1,139 @@
+from sqlalchemy.orm import Session
+
+from app.models.votes import Vote
+from app.services.administrator_service import AdministratorService
+from app.services.commissioner_service import CommissionerService
+from app.repositories.counted_votes_repository import save_counted_vote, get_tally,get_counted_vote_by_hash_n2
+from app.models.counted_votes import CountedVoteStatus
+from app.models.counted_votes import CountedVote
+from app.models.voting_system_config_model import VotingStatus
+from app.repositories.voting_system_config_repo import get_voting_config, set_voting_ended
+from app.key_loader import counter_private_key, counter_public_key
+
+class CounterService:
+    def __init__(self,db: Session = None,administrator_service : AdministratorService = None,commissioner_service: CommissionerService= None,):
+        self.administrator_service = administrator_service
+        self.commissioner_service = commissioner_service
+        self._private_key = counter_private_key
+        self._public_key = counter_public_key
+        self.db=db
+        
+    @property
+    def PUBLIC_KEY(self) -> tuple[int, int]:
+        pub_numbers = self._public_key.public_numbers()
+        return (pub_numbers.e, pub_numbers.n)
+
+    @property
+    def _PRIVATE_KEY(self) -> tuple[int, int]:
+        priv_numbers = self._private_key.private_numbers()
+        return (priv_numbers.d, priv_numbers.public_numbers.n)
+
+    def decrypt_all_votes(self,counter_prv_key: tuple[int, int], encrypted_votes_list: list[Vote]) -> list[int]:
+        """
+        Phase 1: Decrypt all ballots using counter's RSA private key.
+        RSA decryption: m = c^d mod N
+        """
+        d, n = counter_prv_key
+        decrypted_ballots = []
+        
+        for vote in encrypted_votes_list:
+            encrypted = int(vote.encrypted_vote)
+            decrypted = pow(encrypted, d, n) # m = c^d mod N
+            decrypted_ballots.append(decrypted)
+        
+        return decrypted_ballots        
+        
+    def verify_signature(self, decrypted: int) -> tuple[bool, str, str]:
+        """
+        Check 1: Verify admin signature and extract ballot content.
+        RSA verification: m = s^e mod N
+        Returns (is_valid, vote, n2)
+        """
+        try:
+            e, N = self.administrator_service.PUBLIC_KEY
+            recovered_m = pow(decrypted, e, N)
+            byte_length = (recovered_m.bit_length() + 7) // 8
+            recovered_str = recovered_m.to_bytes(byte_length, byteorder='big').decode('utf-8')
+            recovered_str = recovered_str.strip("()")
+            parts = recovered_str.split(",")
+            if len(parts) != 3:
+                return False, "", ""
+            vote, n2, _ = parts
+            return True, vote, n2
+        except Exception as e:
+            print(f"Signature verification failed: {e}")
+            return False, "", ""
+        
+    
+    def is_n2_hash_exist(self,n2: str)->bool:
+        return self.commissioner_service.is_n2_hash_exist(n2=n2)
+    
+    
+    def process_all_votes(self, encrypted_votes_list: list[Vote]) -> dict:
+        """
+        Full counting protocol:
+        Phase 1: Decrypt all ballots with counter's private key
+        Phase 2: For each decrypted ballot:
+            - Check 1: Verify administrator's signature
+            - Check 2: Verify N2 fingerprint with commissioner
+            - Save result to counted_votes table
+        """
+        results = {"valid": 0, "invalid_signature": 0, "invalid_n2": 0, "tally": {}}
+
+        # Phase 1: Decrypt all votes
+        decrypted_ballots = self.decrypt_all_votes(self._PRIVATE_KEY, encrypted_votes_list)
+
+        # Phase 2: Verify each decrypted ballot
+        for decrypted in decrypted_ballots:
+
+            # Check 1: Verify admin signature
+            is_valid, vote, n2 = self.verify_signature(decrypted)
+            if not is_valid:
+                save_counted_vote(db=self.db, n2="unknown", vote="unknown", status=CountedVoteStatus.INVALID_SIGNATURE)
+                results["invalid_signature"] += 1
+                continue
+
+            # Check 2: Verify N2 fingerprint
+            if not self.is_n2_hash_exist(n2):
+                save_counted_vote(db=self.db, n2=n2, vote=vote, status=CountedVoteStatus.INVALID_N2)
+                results["invalid_n2"] += 1
+                continue
+
+            # Valid vote - add to tally
+            save_counted_vote(db=self.db, n2=n2, vote=vote, status=CountedVoteStatus.VALID)
+            results["valid"] += 1
+            results["tally"][vote] = results["tally"].get(vote, 0) + 1
+            # Tally = the count of votes per candidate.
+
+            # For example if 3 people voted "A" and 2 voted "B":
+
+            # {
+            # "valid": 5,
+            # "invalid_signature": 0,
+            # "invalid_n2": 0,
+            # "tally": {
+            # "A": 3,
+            # "B": 2
+            # }
+            # }
+
+        return results
+    
+    def get_results(self):
+        return get_tally(db=self.db)
+    
+    def verify_vote_by_n2(self, n2: str) -> CountedVote | None:
+        return get_counted_vote_by_hash_n2(db=self.db, n2=n2)
+    
+    def finalize_voting(self,encrypted_votes:list[Vote]) -> dict:
+
+        config = get_voting_config(self.db)
+
+        if config.voting_status == VotingStatus.VOTE_ENDED:
+            return {"message": "Voting already finalized"}
+
+        set_voting_ended(db=self.db)
+
+        results = self.process_all_votes(encrypted_votes_list=encrypted_votes)
+
+        return results

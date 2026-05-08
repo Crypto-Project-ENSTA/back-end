@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.models.voting_system_config_model import VotingConfigModel
+from app.models.voting_system_config_model import VotingConfigModel, VotingStatus
+from app.schemas.update_voting_config import UpdateVotingConfigSchema
 
 
 def get_voting_config(db: Session) -> VotingConfigModel:
@@ -18,6 +19,20 @@ def get_voting_config(db: Session) -> VotingConfigModel:
 
     return config
 
+# repository
+def update_voting_config(db: Session, updates: UpdateVotingConfigSchema) -> VotingConfigModel:
+    """
+    Update voting config fields.
+    Only provided (non-None) fields will be updated.
+    """
+    config = get_voting_config(db)
+
+    for field, value in updates.model_dump(exclude_none=True).items():
+        setattr(config, field, value)
+
+    db.commit()
+    db.refresh(config)
+    return config
 
 def is_limit_reached(db: Session) -> bool:
     """
@@ -50,10 +65,28 @@ def mark_emails_sent(db: Session):
     db.commit()
 
 
-def reset_emails_flag(db: Session):
-    """
-    Reset flag (useful for testing or new election).
-    """
+# def reset_emails_flag(db: Session):
+#     """
+#     Reset flag (useful for testing or new election).
+#     """
+#     config = get_voting_config(db)
+#     config.emails_sent = False
+#     db.commit()
+
+def emails_already_sent(db: Session) -> bool:
     config = get_voting_config(db)
-    config.emails_sent = False
+    return config.emails_sent
+
+def set_voting_started(db:Session):
+    config = get_voting_config(db)
+    config.voting_status = VotingStatus.VOTE_STARTED
     db.commit()
+    
+def set_voting_ended(db:Session):
+    config = get_voting_config(db)
+    config.voting_status = VotingStatus.VOTE_ENDED
+    db.commit()
+    
+def check_voting_status(db: Session):
+    config = get_voting_config(db)  
+    return config.voting_status 

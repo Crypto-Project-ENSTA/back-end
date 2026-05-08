@@ -12,6 +12,15 @@ def create_voter(db :Session , voter =VoterSchema ):
     db.refresh(db_voter)
     return db_voter
 
+def get_all_voters(db:Session):
+    voters = db.query(VoterModel).all()
+    return voters
+
+def check_email_existe(db:Session,voter = VoterSchema):
+    db_voter = db.query(VoterModel).filter(VoterModel.email ==voter.email).first()
+    if db_voter is None :
+        return False
+    return True
 # # this function is responsible for checking if the voters pool is full or not 
 # def check_voter_limit(db: Session):
 #     nbrs_of_lines= (db.query(VoterModel).count())

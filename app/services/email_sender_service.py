@@ -2,13 +2,15 @@ import traceback
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from sqlalchemy.orm import Session
 from app.database import SessionLocal
 import threading
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from app.models.voter import Voter
-from app.repositories.voter_repository import  save_voter_credentials
+from app.models.votes import Vote
+from app.repositories.voter_repository import  get_all_voters, save_voter_credentials
 from app.utils.crypto import generate_nonce
 from app.config import settings
 
@@ -19,7 +21,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from app.repositories.voting_system_config_repo import should_send_emails, mark_emails_sent
+from app.repositories.voting_system_config_repo import mark_emails_sent, set_voting_started, should_send_emails,emails_already_sent
 
 def send_email(to_email: str):
     """Send credentials email via Gmail API with Service Account."""
@@ -142,6 +144,7 @@ def send_email(to_email: str):
         }}
 
         .credential-row {{
+            
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -268,7 +271,14 @@ def send_email(to_email: str):
             If you did not request these credentials or believe you received this message in error,
             please contact our support team immediately.
             </p>
-
+            <div class="footer-text" style="margin-top: 20px; text-align: center;">
+                <a href="https://evoting-dev.vercel.app/vote" 
+                style="display: inline-block; background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+                        color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 8px;
+                        font-size: 14px; font-weight: 600; letter-spacing: 0.04em;">
+                    🗳️ Go to Voting Page
+                </a>
+            </div>
             <p class="footer-text" style="margin-top: 20px;">
             Regards,<br/>
             <strong>The e-voting System Team</strong>
@@ -331,47 +341,56 @@ def send_email(to_email: str):
 
 def watch_voters():
     """Watch until voters reach limit, then send emails ONLY ONCE (restart-safe)."""
-    print(" Voter watcher started...")
+    print("Voter watcher started...")
 
     while True:
         db = SessionLocal()
         try:
-            print(" Checking voter condition...")
+            print("Checking voter condition...")
+            
+            if emails_already_sent(db):
+                print("Emails already sent. Watcher exiting.")
+                break
 
             if should_send_emails(db):
-                voters = db.query(Voter).all()
-                print(f" Found {len(voters)} voters")
+                voters = get_all_voters(db=db)
+                send_email_to_voters(db=db,voters=voters)
+                break  
 
-                for voter in voters:
-                    try:
-                        n1, n2 = send_email(voter.email)
-                        print(f" Email sent to {voter.email}")
-                        save_voter_credentials(n1=n1, n2=n2, db=db)
-                        print(f" Credentials saved for {voter.email}")
+            else:
+                print("Condition not met yet, retrying in 10s...")
+                threading.Event().wait(10)
 
-                    except Exception as voter_error:
-                        print(f" Failed for {voter.email}: {voter_error}")
-                        traceback.print_exc()
-                        continue
-
-                print(" All emails sent.")
-
-                # VERY IMPORTANT
-                mark_emails_sent(db)
-                print(" Marked as sent. Stopping watcher.")
-            print("email is sended")
-            break  
 
         except Exception as e:
-            print(f" Unexpected error in watch_voters: {e}")
+            print(f"Unexpected error in watch_voters: {e}")
             traceback.print_exc()
 
         finally:
             db.close()
 
-        threading.Event().wait(10)
 
 def start_voter_watcher():
     global watcher_thread
     watcher_thread = threading.Thread(target=watch_voters, daemon=True)
     watcher_thread.start()
+    
+def send_email_to_voters(db:Session,voters:Vote):
+    print(f"Found {len(voters)} voters")
+    for voter in voters:
+        try:
+            set_voting_started(db=db)
+            n1, n2 = send_email(voter.email)
+            print(f"Email sent to {voter.email}")
+            save_voter_credentials(n1=n1, n2=n2, db=db)
+            print(f"Credentials saved for {voter.email}")
+
+        except Exception as voter_error:
+            print(f"Failed for {voter.email}: {voter_error}")
+            traceback.print_exc()
+            continue
+
+    print("All emails sent.")
+    mark_emails_sent(db)
+    print("Marked as sent. Stopping watcher.")
+
