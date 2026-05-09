@@ -272,7 +272,7 @@ def send_email(to_email: str):
             please contact our support team immediately.
             </p>
             <div class="footer-text" style="margin-top: 20px; text-align: center;">
-                <a href="https://evoting-dev.vercel.app/vote" 
+                <a href="https://evoting-main.vercel.app/vote" 
                 style="display: inline-block; background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
                         color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 8px;
                         font-size: 14px; font-weight: 600; letter-spacing: 0.04em;">
